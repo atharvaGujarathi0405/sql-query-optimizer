@@ -1,0 +1,26 @@
+services:
+  mysql:
+    image: mysql:8.4.13  # pinned: MySQL version must be recorded with results
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set in .env}
+      DATASET_SCHEMAS: ${DATASET_SCHEMAS:?set in .env}
+      OPTIMIZER_ADMIN_USER: ${OPTIMIZER_ADMIN_USER:?set in .env}
+      OPTIMIZER_ADMIN_PASSWORD: ${OPTIMIZER_ADMIN_PASSWORD:?set in .env}
+      OPTIMIZER_READONLY_USER: ${OPTIMIZER_READONLY_USER:?set in .env}
+      OPTIMIZER_READONLY_PASSWORD: ${OPTIMIZER_READONLY_PASSWORD:?set in .env}
+    ports:
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./docker/mysql/conf:/etc/mysql/conf.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  mysql_data:
