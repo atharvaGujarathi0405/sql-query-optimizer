@@ -20,3 +20,15 @@ Requires Docker and Python 3.12+.
 4. Check it: `curl http://127.0.0.1:8000/health` should return `{"status":"ok","db":"connected"}`. Or run `pytest` from `backend/`.
 
 Init scripts in `docker/mysql/init/` only run on first start with an empty volume. If you change user credentials in `.env` afterwards, recreate with `docker compose down -v && docker compose up -d` (this deletes all data).
+
+## Data
+
+```sh
+python scripts/fetch_data.py          # Sakila, Employees (pinned), TPC-H SF1 via dbgen in a no-network container -> data/raw/ (see SOURCES.txt)
+python scripts/load_data.py           # loads as admin; local_infile is on only during the TPC-H load
+python scripts/check_counts.py        # COUNT(*) as reader vs data/expected_counts.yaml
+python scripts/build_registry.py      # data/queries.yaml (+ splits.yaml once; frozen)
+python scripts/validate_queries.py    # one run per query, timeout from config/run.yaml
+```
+
+Threats to validity are tracked in `docs/threats_to_validity.md`.

@@ -1,0 +1,505 @@
+- id: ap01_select_star
+  dataset: sakila
+  tags:
+  - antipattern
+  - select-star
+  - join
+  sql: |
+    SELECT *
+    FROM rental r
+    JOIN customer c ON c.customer_id = r.customer_id
+    JOIN inventory i ON i.inventory_id = r.inventory_id
+    WHERE c.last_name = 'SMITH'
+  anti_pattern: SELECT * across a 3-table join returns every column (incl. duplicates) instead of the ones needed
+- id: ap02_function_on_indexed_column
+  dataset: sakila
+  tags:
+  - antipattern
+  - function-on-column
+  - non-sargable
+  sql: |
+    SELECT rental_id, customer_id, inventory_id
+    FROM rental
+    WHERE DATE(rental_date) = '2005-07-08'
+  anti_pattern: function on an indexed column (DATE(rental_date)) defeats the unique index whose leading column is rental_date
+- id: ap03_correlated_subquery
+  dataset: sakila
+  tags:
+  - antipattern
+  - correlated-subquery
+  sql: |
+    SELECT p.payment_id, p.customer_id, p.amount
+    FROM payment p
+    WHERE p.amount > (SELECT AVG(p2.amount) FROM payment p2 WHERE p2.customer_id = p.customer_id)
+  anti_pattern: correlated subquery re-evaluated per outer row (payments above the customer's own average)
+- id: ap04_not_in_subquery
+  dataset: sakila
+  tags:
+  - antipattern
+  - not-in
+  - anti-join
+  sql: |
+    SELECT f.film_id, f.title
+    FROM film f
+    WHERE f.film_id NOT IN (SELECT i.film_id FROM inventory i)
+  anti_pattern: 'NOT IN (subquery): not an anti-join in general, and NULL-unsafe; NOT EXISTS / LEFT JOIN IS NULL is the safe form'
+- id: ap05_leading_wildcard_like
+  dataset: sakila
+  tags:
+  - antipattern
+  - leading-wildcard-like
+  - non-sargable
+  sql: |
+    SELECT film_id, title
+    FROM film
+    WHERE title LIKE '%LOVE%'
+  anti_pattern: LIKE with a leading wildcard cannot use a B-tree range on idx_title
+- id: ap06_or_across_columns
+  dataset: sakila
+  tags:
+  - antipattern
+  - or-across-columns
+  sql: |
+    SELECT rental_id, customer_id, inventory_id
+    FROM rental
+    WHERE customer_id = 130 OR inventory_id = 2000
+  anti_pattern: OR across two different columns forces index_merge or a scan; UNION of two index lookups is the usual rewrite
+- id: ap07_implicit_cast
+  dataset: sakila
+  tags:
+  - antipattern
+  - implicit-cast
+  - non-sargable
+  sql: |
+    SELECT address_id, address, postal_code
+    FROM address
+    WHERE postal_code = 35200
+  anti_pattern: 'VARCHAR column compared with a numeric literal: the column is cast per row, so no index could be used'
+- id: ap08_arithmetic_on_indexed_column
+  dataset: employees
+  tags:
+  - antipattern
+  - function-on-column
+  - non-sargable
+  sql: |
+    SELECT emp_no, salary, from_date
+    FROM salaries
+    WHERE emp_no - 1 = 10000
+  anti_pattern: arithmetic on the indexed key (emp_no - 1 = 10000) forces a full scan of salaries
+- id: ap09_select_star_join
+  dataset: employees
+  tags:
+  - antipattern
+  - select-star
+  - join
+  sql: |
+    SELECT *
+    FROM employees e
+    JOIN salaries s ON s.emp_no = e.emp_no
+    WHERE e.emp_no BETWEEN 10001 AND 10200
+  anti_pattern: SELECT * over a join pulls all columns of both tables (and duplicate emp_no)
+- id: ap10_correlated_max_subquery
+  dataset: employees
+  tags:
+  - antipattern
+  - correlated-subquery
+  sql: |
+    SELECT e.emp_no, s.salary
+    FROM employees e
+    JOIN salaries s ON s.emp_no = e.emp_no
+    WHERE e.hire_date >= '1999-01-01'
+      AND s.salary = (SELECT MAX(s2.salary) FROM salaries s2 WHERE s2.emp_no = e.emp_no)
+  anti_pattern: correlated MAX() subquery per row to find each employee's top salary; window function or grouped join is the rewrite
+- id: ap11_not_in_subquery
+  dataset: employees
+  tags:
+  - antipattern
+  - not-in
+  - anti-join
+  sql: |
+    SELECT e.emp_no, e.first_name, e.last_name
+    FROM employees e
+    WHERE e.emp_no NOT IN (SELECT dm.emp_no FROM dept_manager dm)
+      AND e.hire_date >= '1999-06-01'
+  anti_pattern: NOT IN (subquery) used as an anti-join
+- id: ap12_or_across_columns
+  dataset: employees
+  tags:
+  - antipattern
+  - or-across-columns
+  sql: |
+    SELECT emp_no, dept_no
+    FROM dept_emp
+    WHERE dept_no = 'd009' OR from_date = '1990-01-01'
+  anti_pattern: OR across dept_no and from_date (different columns)
+- id: ap13_leading_wildcard_like
+  dataset: employees
+  tags:
+  - antipattern
+  - leading-wildcard-like
+  - non-sargable
+  sql: |
+    SELECT emp_no, last_name
+    FROM employees
+    WHERE last_name LIKE '%ston'
+  anti_pattern: LIKE with a leading wildcard on last_name
+- id: ap14_redundant_distinct
+  dataset: employees
+  tags:
+  - antipattern
+  - redundant-distinct
+  sql: |
+    SELECT DISTINCT e.emp_no, e.last_name
+    FROM employees e
+    JOIN dept_emp de ON de.emp_no = e.emp_no
+    WHERE de.dept_no = 'd009'
+  anti_pattern: DISTINCT on a join that cannot produce duplicates ((emp_no, dept_no) is the dept_emp primary key) - pays for a dedup sort/temp table
+- id: ap15_having_instead_of_where
+  dataset: employees
+  tags:
+  - antipattern
+  - having-instead-of-where
+  sql: |
+    SELECT dept_no, COUNT(*) AS n
+    FROM dept_emp
+    GROUP BY dept_no
+    HAVING dept_no = 'd005'
+  anti_pattern: 'HAVING on a grouping column: filters after aggregating every group instead of before'
+- id: ap16_deep_offset_pagination
+  dataset: employees
+  tags:
+  - antipattern
+  - deep-offset
+  sql: |
+    SELECT emp_no, from_date, salary
+    FROM salaries
+    ORDER BY emp_no, from_date
+    LIMIT 20 OFFSET 2000000
+  anti_pattern: deep OFFSET pagination reads and discards 2,000,000 rows; keyset pagination is the rewrite
+- id: ap17_function_on_column
+  dataset: tpch
+  tags:
+  - antipattern
+  - function-on-column
+  - non-sargable
+  sql: |
+    SELECT o_orderpriority, COUNT(*) AS n
+    FROM orders
+    WHERE YEAR(o_orderdate) = 1995
+    GROUP BY o_orderpriority
+    ORDER BY o_orderpriority
+  anti_pattern: YEAR() on o_orderdate prevents any range access on the date
+- id: ap18_correlated_count_subquery
+  dataset: tpch
+  tags:
+  - antipattern
+  - correlated-subquery
+  sql: |
+    SELECT c.c_custkey, c.c_name
+    FROM customer c
+    WHERE (SELECT COUNT(*) FROM orders o WHERE o.o_custkey = c.c_custkey) > 20
+  anti_pattern: correlated COUNT(*) subquery in WHERE evaluated per customer; GROUP BY ... HAVING is the rewrite
+- id: ap19_not_in_subquery
+  dataset: tpch
+  tags:
+  - antipattern
+  - not-in
+  - anti-join
+  sql: |
+    SELECT c_custkey, c_name
+    FROM customer
+    WHERE c_custkey NOT IN (SELECT o_custkey FROM orders)
+  anti_pattern: NOT IN (subquery) over 1.5M orders used as an anti-join
+- id: ap20_or_across_columns
+  dataset: tpch
+  tags:
+  - antipattern
+  - or-across-columns
+  sql: |
+    SELECT o_orderkey, o_custkey
+    FROM orders
+    WHERE o_custkey = 1234 OR o_orderdate = '1995-03-15'
+  anti_pattern: OR across o_custkey (indexed via FK) and o_orderdate (not indexed) forces a scan
+- id: ap21_scalar_subquery_in_select
+  dataset: tpch
+  tags:
+  - antipattern
+  - correlated-subquery
+  - subquery-in-select
+  sql: |
+    SELECT c.c_custkey, c.c_name,
+           (SELECT COUNT(*) FROM orders o WHERE o.o_custkey = c.c_custkey) AS n_orders
+    FROM customer c
+    WHERE c.c_nationkey = 7
+  anti_pattern: scalar correlated subquery in the SELECT list runs once per output row; LEFT JOIN + GROUP BY is the rewrite
+- id: ap22_union_instead_of_union_all
+  dataset: tpch
+  tags:
+  - antipattern
+  - union-vs-union-all
+  sql: |
+    SELECT c_custkey FROM customer WHERE c_nationkey = 1
+    UNION
+    SELECT c_custkey FROM customer WHERE c_nationkey = 2
+  anti_pattern: UNION de-duplicates although the two branches are disjoint (different nations); UNION ALL skips the dedup
+- id: emp_avg_salary_by_dept
+  dataset: employees
+  tags:
+  - natural
+  - aggregate
+  - join
+  sql: |
+    SELECT d.dept_name, AVG(s.salary) AS avg_salary
+    FROM departments d
+    JOIN dept_emp de ON de.dept_no = d.dept_no
+    JOIN salaries s ON s.emp_no = de.emp_no
+    WHERE de.to_date = '9999-01-01' AND s.to_date = '9999-01-01'
+    GROUP BY d.dept_name
+    ORDER BY d.dept_name
+- id: emp_current_managers
+  dataset: employees
+  tags:
+  - natural
+  - join
+  sql: |
+    SELECT d.dept_name, e.first_name, e.last_name, dm.from_date
+    FROM dept_manager dm
+    JOIN employees e ON e.emp_no = dm.emp_no
+    JOIN departments d ON d.dept_no = dm.dept_no
+    WHERE dm.to_date = '9999-01-01'
+    ORDER BY d.dept_name
+- id: emp_titles_count
+  dataset: employees
+  tags:
+  - natural
+  - aggregate
+  sql: |
+    SELECT title, COUNT(*) AS n
+    FROM titles
+    GROUP BY title
+    ORDER BY title
+- id: emp_top_paid_current
+  dataset: employees
+  tags:
+  - natural
+  - top-n
+  - join
+  sql: |
+    SELECT e.emp_no, e.last_name, s.salary
+    FROM employees e
+    JOIN salaries s ON s.emp_no = e.emp_no
+    WHERE s.to_date = '9999-01-01'
+    ORDER BY s.salary DESC, e.emp_no
+    LIMIT 10
+- id: sak_busiest_actors
+  dataset: sakila
+  tags:
+  - natural
+  - aggregate
+  - top-n
+  - join
+  sql: |
+    SELECT a.actor_id, a.first_name, a.last_name, COUNT(*) AS n_films
+    FROM actor a
+    JOIN film_actor fa ON fa.actor_id = a.actor_id
+    GROUP BY a.actor_id, a.first_name, a.last_name
+    ORDER BY n_films DESC, a.actor_id
+    LIMIT 10
+- id: sak_films_per_category
+  dataset: sakila
+  tags:
+  - natural
+  - aggregate
+  - join
+  sql: |
+    SELECT cat.name, COUNT(*) AS n_films
+    FROM category cat
+    JOIN film_category fc ON fc.category_id = cat.category_id
+    GROUP BY cat.name
+    ORDER BY cat.name
+- id: sak_rentals_per_store_month
+  dataset: sakila
+  tags:
+  - natural
+  - aggregate
+  - join
+  sql: |
+    SELECT i.store_id, DATE_FORMAT(r.rental_date, '%Y-%m') AS ym, COUNT(*) AS n
+    FROM rental r
+    JOIN inventory i ON i.inventory_id = r.inventory_id
+    GROUP BY i.store_id, ym
+    ORDER BY i.store_id, ym
+- id: sak_top_customers
+  dataset: sakila
+  tags:
+  - natural
+  - aggregate
+  - top-n
+  sql: |
+    SELECT c.customer_id, c.first_name, c.last_name, SUM(p.amount) AS total
+    FROM customer c
+    JOIN payment p ON p.customer_id = c.customer_id
+    GROUP BY c.customer_id, c.first_name, c.last_name
+    ORDER BY total DESC, c.customer_id
+    LIMIT 10
+- id: tpch_q01
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - aggregate
+  - scan
+  sql: |
+    SELECT l_returnflag, l_linestatus,
+           SUM(l_quantity) AS sum_qty,
+           SUM(l_extendedprice) AS sum_base_price,
+           SUM(l_extendedprice * (1 - l_discount)) AS sum_disc_price,
+           SUM(l_extendedprice * (1 - l_discount) * (1 + l_tax)) AS sum_charge,
+           AVG(l_quantity) AS avg_qty,
+           AVG(l_extendedprice) AS avg_price,
+           AVG(l_discount) AS avg_disc,
+           COUNT(*) AS count_order
+    FROM lineitem
+    WHERE l_shipdate <= DATE '1998-12-01' - INTERVAL 90 DAY
+    GROUP BY l_returnflag, l_linestatus
+    ORDER BY l_returnflag, l_linestatus
+- id: tpch_q03
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - join
+  - top-n
+  sql: |
+    SELECT l_orderkey, SUM(l_extendedprice * (1 - l_discount)) AS revenue, o_orderdate, o_shippriority
+    FROM customer, orders, lineitem
+    WHERE c_mktsegment = 'BUILDING'
+      AND c_custkey = o_custkey
+      AND l_orderkey = o_orderkey
+      AND o_orderdate < DATE '1995-03-15'
+      AND l_shipdate > DATE '1995-03-15'
+    GROUP BY l_orderkey, o_orderdate, o_shippriority
+    ORDER BY revenue DESC, o_orderdate
+    LIMIT 10
+- id: tpch_q04
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - exists-subquery
+  sql: |
+    SELECT o_orderpriority, COUNT(*) AS order_count
+    FROM orders
+    WHERE o_orderdate >= DATE '1993-07-01'
+      AND o_orderdate < DATE '1993-07-01' + INTERVAL 3 MONTH
+      AND EXISTS (SELECT * FROM lineitem WHERE l_orderkey = o_orderkey AND l_commitdate < l_receiptdate)
+    GROUP BY o_orderpriority
+    ORDER BY o_orderpriority
+- id: tpch_q05
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - join
+  - six-way
+  sql: |
+    SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue
+    FROM customer, orders, lineitem, supplier, nation, region
+    WHERE c_custkey = o_custkey
+      AND l_orderkey = o_orderkey
+      AND l_suppkey = s_suppkey
+      AND c_nationkey = s_nationkey
+      AND s_nationkey = n_nationkey
+      AND n_regionkey = r_regionkey
+      AND r_name = 'ASIA'
+      AND o_orderdate >= DATE '1994-01-01'
+      AND o_orderdate < DATE '1994-01-01' + INTERVAL 1 YEAR
+    GROUP BY n_name
+    ORDER BY revenue DESC
+- id: tpch_q06
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - scan
+  - aggregate
+  sql: |
+    SELECT SUM(l_extendedprice * l_discount) AS revenue
+    FROM lineitem
+    WHERE l_shipdate >= DATE '1994-01-01'
+      AND l_shipdate < DATE '1994-01-01' + INTERVAL 1 YEAR
+      AND l_discount BETWEEN 0.06 - 0.01 AND 0.06 + 0.01
+      AND l_quantity < 24
+- id: tpch_q10
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - join
+  - top-n
+  sql: |
+    SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue,
+           c_acctbal, n_name, c_address, c_phone, c_comment
+    FROM customer, orders, lineitem, nation
+    WHERE c_custkey = o_custkey
+      AND l_orderkey = o_orderkey
+      AND o_orderdate >= DATE '1993-10-01'
+      AND o_orderdate < DATE '1993-10-01' + INTERVAL 3 MONTH
+      AND l_returnflag = 'R'
+      AND c_nationkey = n_nationkey
+    GROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment
+    ORDER BY revenue DESC, c_custkey
+    LIMIT 20
+- id: tpch_q12
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - join
+  - aggregate
+  sql: |
+    SELECT l_shipmode,
+           SUM(CASE WHEN o_orderpriority = '1-URGENT' OR o_orderpriority = '2-HIGH' THEN 1 ELSE 0 END) AS high_line_count,
+           SUM(CASE WHEN o_orderpriority <> '1-URGENT' AND o_orderpriority <> '2-HIGH' THEN 1 ELSE 0 END) AS low_line_count
+    FROM orders, lineitem
+    WHERE o_orderkey = l_orderkey
+      AND l_shipmode IN ('MAIL', 'SHIP')
+      AND l_commitdate < l_receiptdate
+      AND l_shipdate < l_commitdate
+      AND l_receiptdate >= DATE '1994-01-01'
+      AND l_receiptdate < DATE '1994-01-01' + INTERVAL 1 YEAR
+    GROUP BY l_shipmode
+    ORDER BY l_shipmode
+- id: tpch_q14
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - join
+  - aggregate
+  sql: |
+    SELECT 100.00 * SUM(CASE WHEN p_type LIKE 'PROMO%' THEN l_extendedprice * (1 - l_discount) ELSE 0 END)
+           / SUM(l_extendedprice * (1 - l_discount)) AS promo_revenue
+    FROM lineitem, part
+    WHERE l_partkey = p_partkey
+      AND l_shipdate >= DATE '1995-09-01'
+      AND l_shipdate < DATE '1995-09-01' + INTERVAL 1 MONTH
+- id: tpch_q17
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - correlated-subquery
+  sql: |
+    SELECT SUM(l_extendedprice) / 7.0 AS avg_yearly
+    FROM lineitem, part
+    WHERE p_partkey = l_partkey
+      AND p_brand = 'Brand#23'
+      AND p_container = 'MED BOX'
+      AND l_quantity < (SELECT 0.2 * AVG(l_quantity) FROM lineitem WHERE l_partkey = p_partkey)
+- id: tpch_q18
+  dataset: tpch
+  tags:
+  - tpch-standard
+  - in-subquery
+  - top-n
+  sql: |
+    SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty
+    FROM customer, orders, lineitem
+    WHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300)
+      AND c_custkey = o_custkey
+      AND o_orderkey = l_orderkey
+    GROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice
+    ORDER BY o_totalprice DESC, o_orderdate, o_orderkey
+    LIMIT 100

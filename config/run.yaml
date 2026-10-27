@@ -1,0 +1,18 @@
+# Execution settings shared by every arm. Fixed before any evaluation run.
+#
+# query_timeout_s: per-query wall-clock cap, applied via MySQL max_execution_time
+# to every query the read-only user runs (original and candidates alike).
+#
+# Why 120: in the single-run feasibility check (scripts/validate_queries.py, 120 s
+# cap, 2026-10-27) all 40 baseline queries finished; the slowest was TPC-H Q1 at
+# 20.8 s, most took under 1 s, and none timed out at baseline (Q17: 0.5 s,
+# Q18: 3.6 s, contrary to the expectation that they might). 120 s is ~6x the
+# slowest baseline: a candidate that cannot finish in that time is
+# pathologically worse than anything in the registry, yet one timeout costs at
+# most 2 minutes. Not tuned on arm performance.
+#
+# A timeout is its own outcome ("timeout"), never a runtime: results record
+# outcome=timeout with runtime=null, and reports count timeouts separately
+# (right-censored), not as 120 s. After a candidate's first timeout the runner
+# skips its remaining repeats (outcome recorded once per candidate).
+query_timeout_s: 120

@@ -1,0 +1,52 @@
+# Frozen before any evaluation. Tune on dev only; report on test. Never regenerate.
+# STEP 3 check (2026-10-27, before any evaluation run): dataset x category counts
+#   dev  (15): antipattern 9, tpch-standard 3, control 3
+#   test (25): antipattern 13, tpch-standard 7, control 5
+# Test has 5 controls (>= 3) and no populated cell is empty; the largest skew is
+# tpch-standard at 3/7 vs the 40/60 target. Judged mild, so the split was NOT
+# regenerated: it stays as first generated (seed below, stratified by dataset).
+# FROZEN: after the first evaluation run this file must never change.
+seed: 20261027
+dev_fraction: 0.4
+dev:
+- ap03_correlated_subquery
+- ap05_leading_wildcard_like
+- ap12_or_across_columns
+- ap13_leading_wildcard_like
+- ap15_having_instead_of_where
+- ap16_deep_offset_pagination
+- ap17_function_on_column
+- ap18_correlated_count_subquery
+- ap21_scalar_subquery_in_select
+- emp_current_managers
+- sak_rentals_per_store_month
+- sak_top_customers
+- tpch_q05
+- tpch_q10
+- tpch_q18
+test:
+- ap01_select_star
+- ap02_function_on_indexed_column
+- ap04_not_in_subquery
+- ap06_or_across_columns
+- ap07_implicit_cast
+- ap08_arithmetic_on_indexed_column
+- ap09_select_star_join
+- ap10_correlated_max_subquery
+- ap11_not_in_subquery
+- ap14_redundant_distinct
+- ap19_not_in_subquery
+- ap20_or_across_columns
+- ap22_union_instead_of_union_all
+- emp_avg_salary_by_dept
+- emp_titles_count
+- emp_top_paid_current
+- sak_busiest_actors
+- sak_films_per_category
+- tpch_q01
+- tpch_q03
+- tpch_q04
+- tpch_q06
+- tpch_q12
+- tpch_q14
+- tpch_q17
