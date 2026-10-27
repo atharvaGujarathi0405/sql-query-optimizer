@@ -113,3 +113,26 @@ def test_client_errors_other_than_429_are_not_retried():
     LLMClient(CFG, transport=httpx.MockTransport(lambda req: (calls.append(1), httpx.Response(404))[1]),
               sleep=sleeps.append).chat(MSG, provider="ollama")
     assert len(calls) == 1 and sleeps == []
+
+
+def test_dropped_connection_is_ridden_out_with_long_backoff():
+    calls, sleeps = [], []
+
+    def handler(request):
+        calls.append(1)
+        if len(calls) < 3:
+            raise httpx.ConnectError("getaddrinfo failed")
+        return httpx.Response(200, json={"message": {"content": "back online"}})
+
+    r = LLMClient(CFG, transport=httpx.MockTransport(handler), sleep=sleeps.append).chat(MSG, provider="ollama")
+    assert r.text == "back online" and sleeps == [5.0, 15.0]
+
+
+def test_a_persistent_outage_is_a_logged_failure_after_the_last_try():
+    sleeps = []
+
+    def handler(request):
+        raise httpx.ConnectError("getaddrinfo failed")
+
+    r = LLMClient(CFG, transport=httpx.MockTransport(handler), sleep=sleeps.append).chat(MSG, provider="ollama")
+    assert r.text is None and "ConnectError" in r.error and sleeps == [5.0, 15.0, 45.0]

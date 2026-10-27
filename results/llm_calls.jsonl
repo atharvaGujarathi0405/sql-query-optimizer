@@ -29,3 +29,193 @@
 {"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.344, "error": ""}
 {"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.335, "error": ""}
 {"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.818, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.045, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.194, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.242, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.956, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.92, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.681, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.146, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.145, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.232, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.666, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.363, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.259, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.684, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.703, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.308, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.346, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.928, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.401, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.731, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.673, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.309, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.39, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.246, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.334, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.231, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.238, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.875, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.52, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.369, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.697, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.495, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.204, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.244, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.224, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.792, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.254, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.303, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.413, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.351, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.489, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.294, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.239, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.231, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.562, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.445, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.346, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.863, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.843, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.358, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.399, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.489, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.337, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.937, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.449, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.574, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.593, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 9.462, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.302, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.429, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.412, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.035, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.319, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.311, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.433, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.516, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 13.428, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.385, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.369, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.828, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 13.503, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.455, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.3, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.385, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.244, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.532, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.649, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.698, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.445, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.326, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 30.057, "error": "ConnectError: [WinError 10065] A socket operation was attempted to an unreachable host"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.011, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 0.001, "error": "ConnectError: [Errno 11001] getaddrinfo failed"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.726, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.512, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.409, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.408, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.438, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.589, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.42, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.414, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.734, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.815, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.783, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.834, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.178, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.002, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.627, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.316, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.102, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.964, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.293, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.371, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.313, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.964, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.784, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.233, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.514, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.846, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 13.521, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 12.917, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.999, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.02, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.74, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.454, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.343, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.401, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.382, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.416, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.504, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.511, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.062, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 10.47, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.503, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.411, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.485, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.741, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.127, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.512, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.762, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.708, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.583, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.745, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.594, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.408, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.409, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.51, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.411, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.297, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.513, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.83, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.819, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.604, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.744, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.402, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.312, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.409, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.322, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.392, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.668, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.184, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.287, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 9.173, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.361, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.071, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.026, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.055, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.312, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.872, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 6.806, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.986, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.883, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.986, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.912, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.436, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.407, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.398, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.524, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.028, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.074, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 13.981, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.89, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 15.623, "error": ""}

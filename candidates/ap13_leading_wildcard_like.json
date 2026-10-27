@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "query_id": "ap13_leading_wildcard_like",
+  "dataset": "employees",
+  "original_sql": "SELECT emp_no, last_name\nFROM employees\nWHERE last_name LIKE '%ston'",
+  "created_at": "2026-10-27T07:20:18+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "2d58b059bc9fa240dce5b9ce918b991b55ebe128e475ca7cc7a011faca2a57c5",
+    "detected_patterns": [
+      "leading-wildcard-like"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.194,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 185,
+    "error": ""
+  },
+  "n_proposed": 0,
+  "n_truncated": 0,
+  "candidates": []
+}

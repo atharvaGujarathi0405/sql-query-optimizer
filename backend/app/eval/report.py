@@ -89,6 +89,29 @@ def fmt_p(p):
     return "n/a" if p is None else f"{p:.4f}"
 
 
+def _fmt_arm(units: list[dict]) -> str:
+    """'c4  x0.08 win' for one pick; 'c1x4,original x1  x0.09 win' when repeats disagree."""
+    picks = Counter(u["pick"] for u in units)
+    p = ",".join(f"{k}x{n}" for k, n in picks.most_common()) if len(picks) > 1 else next(iter(picks))
+    rs = [u["ratio"] for u in units if u["ratio"] is not None]
+    oc = Counter(u["outcome"] for u in units)
+    o = next(iter(oc)) if len(oc) == 1 else ",".join(f"{k}x{n}" for k, n in oc.most_common())
+    return f"{p} x{np.mean(rs):.2f} {o}" if rs else f"{p} {o}"
+
+
+def per_query_section(data: dict, sc: list[dict], contested: list[dict]) -> list[str]:
+    """One row per contested query: what each arm picked, mean ratio to baseline (x0.10 = 10x faster), outcome."""
+    L = ["CONTESTED QUERIES (pool has >= 1 valid candidate); ratio = pick time / baseline time, lower is better",
+         f"{'query':32}{'valid':>6}{'base ms':>9}   {'3 (OR)':26}{'3-raw':22}{'2b':22}2a"]
+    for q in contested:
+        qid = q["query_id"]
+        base = data["ev"].get((qid, "original"))
+        cells = {a: _fmt_arm([s for s in sc if s["query_id"] == qid and s["arm"] == a]) for a in ("3", "3-raw", "2b", "2a")}
+        L.append(f"{qid[:31]:32}{q['n_valid']:>6}{base['runtime_ms_median']:>9.1f}   {cells['3']:26}{cells['3-raw']:22}{cells['2b']:22}{cells['2a']}")
+    L.append("")
+    return L
+
+
 def report(path: Path) -> str:
     data = load(path)
     m, sc = data["meta"], score(data)
@@ -123,6 +146,7 @@ def report(path: Path) -> str:
     L.append("  units = queries for arms 1/3/3-raw, query x repeat for 2a/2b. 'fallback' = failure scored as the original.")
     L.append("")
 
+    L += per_query_section(data, sc, contested)
     L.append("LLM VARIANCE ACROSS REPEATS (arms 2a, 2b)")
     for arm in LLM_ARMS:
         by_q = defaultdict(list)

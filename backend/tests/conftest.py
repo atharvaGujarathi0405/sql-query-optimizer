@@ -20,8 +20,9 @@ class FakeLLM:
     def chat(self, messages, provider=None, json_mode=False):
         self.calls += 1
         if self._fail:
-            return LLMResponse(None, None, None, attempts=[Attempt("ollama", "fake-model", False, 0.0, "ConnectError")],
-                               error="ollama: ConnectError")
+            err = self._fail if isinstance(self._fail, str) else "HTTPStatusError: 503 Service Unavailable"
+            return LLMResponse(None, None, None, attempts=[Attempt("ollama", "fake-model", False, 0.0, err)],
+                               error=f"ollama: {err}")
         return LLMResponse(self._text, self._provider, "fake-model", 0.01,
                            [Attempt(self._provider, "fake-model", True, 0.01)])
 

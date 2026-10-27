@@ -40,6 +40,7 @@ ROOT = Path(__file__).resolve().parents[3]
 RESULTS_DIR = ROOT / "results"
 SEL_SEED, EVAL_SEED = 101, 202  # measurement-order shuffles for the two passes
 ARMS_LLM = ("2a", "2b")
+TRANSPORT_ERRORS = ("ConnectError", "ConnectTimeout", "ReadTimeout", "WriteError", "RemoteProtocolError", "PoolTimeout")
 
 
 def sha256_file(p: Path) -> str | None:
@@ -173,8 +174,11 @@ def _run_query(conn, w: Writer, client, provider: str, model: str, q: dict, repe
                         label_map=label_map, latency_s=resp.latency_s, attempts=[a.__dict__ for a in resp.attempts],
                         answer=(resp.text or "")[:1500], llm_provider=resp.provider, llm_model=resp.model)
             if resp.text is None:
-                _fail(w, qid, f"arm_{variant}", "llm_failure", resp.error, repeat=r)
-                arm(variant, "original", r, by="llm", failure="llm_failure", **info)
+                # an unreachable provider (network/DNS) is an infrastructure fault, not model behaviour: same
+                # scoring (the original), but a separate kind so a run hit by an outage is recognisable
+                kind = "llm_unreachable" if any(k in resp.error for k in TRANSPORT_ERRORS) else "llm_failure"
+                _fail(w, qid, f"arm_{variant}", kind, resp.error, repeat=r)
+                arm(variant, "original", r, by="llm", failure=kind, **info)
                 continue
             pick, err = parse_choice(resp.text, label_map)
             if pick is None:

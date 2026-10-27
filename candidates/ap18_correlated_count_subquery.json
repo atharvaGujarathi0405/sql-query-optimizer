@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "query_id": "ap18_correlated_count_subquery",
+  "dataset": "tpch",
+  "original_sql": "SELECT c.c_custkey, c.c_name\nFROM customer c\nWHERE (SELECT COUNT(*) FROM orders o WHERE o.o_custkey = c.c_custkey) > 20",
+  "created_at": "2026-10-27T07:20:25+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "3ef65a047415a21ab05a7bb9bdbe1b91823ee6ece611de100b69922ba18cc4fa",
+    "detected_patterns": [
+      "correlated-subquery"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.92,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 22070,
+    "error": ""
+  },
+  "n_proposed": 3,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT c.c_custkey, c.c_name\nFROM customer c\nJOIN orders o ON o.o_custkey = c.c_custkey\nGROUP BY c.c_custkey, c.c_name\nHAVING COUNT(*) > 20",
+      "rationale": "Replaces the correlated subquery with a single join and group-by, allowing the optimizer to use a hash join or index scan on orders.o_custkey instead of executing a subquery for every customer row.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 22070,
+        "candidate_rows": 22070,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT c.c_custkey, c.c_name\nFROM customer c\nWHERE EXISTS (\n  SELECT 1 FROM orders o\n  WHERE o.o_custkey = c.c_custkey\n  GROUP BY o.o_custkey\n  HAVING COUNT(*) > 20\n)",
+      "rationale": "Uses EXISTS with a grouped subquery so the inner query can be evaluated once per distinct customer key rather than counting all matching rows for every outer row.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 22070,
+        "candidate_rows": 22070,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT c.c_custkey, c.c_name\nFROM customer c\nJOIN (\n  SELECT o_custkey, COUNT(*) AS cnt\n  FROM orders\n  GROUP BY o_custkey\n  HAVING COUNT(*) > 20\n) o ON o.o_custkey = c.c_custkey",
+      "rationale": "Pre-aggregates the orders table in a derived table to find customer keys with more than 20 orders, then joins back to customer, avoiding per-row subquery execution.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 22070,
+        "candidate_rows": 22070,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

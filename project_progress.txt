@@ -64,7 +64,7 @@ Commits (all on branch main):
   Phase 5  NOT STARTED   Scale Simulator (M/M/c + SimPy)
   Phase 6  NOT STARTED   React/Vite/Tailwind frontend + results dashboard
 
-  Tests: 186 passing (backend/tests, 13 files). 40 queries registered.
+  Tests: 191 passing (backend/tests, 13 files). 40 queries registered. (See section 15 for the update.)
   The real evaluation (full dev tuning run, then ONE test run) has NOT been done.
 
 
@@ -372,8 +372,8 @@ Several of these were my own mistakes; they are listed so the record is honest.
   - dbgen's "compiled-in seeds give identical output on every run" is from
     knowledge, not tested. The .tbl SHA-256s are recorded so a second
     generation can prove it.
-  - Pool coverage: pools exist for only 6 of 40 queries.
-  - The only real LLM-arm calls so far are the 20 in the dry run (2 queries).
+  - Pool coverage: pools exist for 16 of 40 queries (the 15 dev queries + ap08).
+  - Real LLM-arm results exist only for the dev set (dev-003 is the one clean run); test is untouched.
   - The frontend, advisor and simulator directories are empty placeholders.
 
 
@@ -494,3 +494,72 @@ Full text: docs/threats_to_validity.md, items 1-30. Headlines:
 
   Uncommitted right now: CLAUDE.md (stray "go" line) and this file.
 ================================================================================
+
+
+--------------------------------------------------------------------------------
+15. UPDATE AFTER THE FULL DEV RUNS  (dev-001, dev-002, dev-003)
+--------------------------------------------------------------------------------
+15.1 What happened
+  Pools were generated for all 15 dev queries (Groq qwen/qwen3.8-27b). Only 6 of 15
+  have a real choice (ap03, ap15, ap17, ap18, ap21, tpch_q18); the other 9 are
+  original-only (the generator proposed nothing, or its proposal failed the check:
+  ap16's keyset-pagination rewrite was rejected as rows_mismatch). Three full dev
+  runs were made:
+    dev-001  INVALID RECORD. rows_examined came from performance_schema, which
+             undercounts reads inside subqueries/derived tables (Q18: 1.5M and 627
+             reported vs 9.0M and 6.0M from MySQL's Handler_read_* counters; a
+             COUNT(*) over 16,044 rows showed 0). Both 2b and 3 saw the bad column.
+    dev-002  INVALID FOR THE LLM ARMS. A network outage made 21 Groq calls fail
+             (DNS errors) on ap03/ap15/ap17; they were scored as the original.
+    dev-003  CLEAN. No failures. Metric fixed, outage handling added. ~10 minutes.
+
+15.2 Fixes made along the way (all tested; 191 tests)
+  - rows_examined is now the Handler_read_* delta around the last timed run
+    (calibrated: the status query adds 0 reads; SELECT 1 reads 0, a point lookup 1,
+    a 16,044-row scan 16,046). The performance_schema lookup was removed.
+  - LLM client retries dropped connections with 5/15/45 s backoff; the runner labels
+    an unreachable provider llm_unreachable (separate from llm_failure; same scoring).
+  - Report gained a per-query table for the contested queries.
+
+15.3 dev-003 result (contested queries; ratio = pick time / baseline, lower is better)
+  ap03   all arms pick c1 (x0.08, 12x faster); 2a once kept the original
+  ap15   all arms pick c1 (x0.33)
+  ap17   only candidate is SLOWER (x1.21): OR guard, 2b keep the original; 2a picks
+         it every time (5 losses); 3-raw (no guard) also picks it -> the guard helped
+  ap18   2b finds c3 (x0.71); OR keeps the original (miss); 2a mixed
+  ap21   OR and 2b keep the original; 2a picks a slower c1 in 3 of 5 repeats (losses)
+  tpch_q18 2b finds c3 (x0.78); OR picks c1 (x0.99, a tie) (miss); 2a mostly c3
+  Totals vs baseline: 2a 17 win / 9 loss; 2b 20 win / 0 loss (75 units each);
+  OR 2 win / 0 loss; 3-raw 2 win / 1 loss (15 units). Arm 1 is all ties by definition.
+  3 vs 2b: 13 of 15 pairs identical; 2 non-identical, both favour 2b; Wilcoxon
+  p = 0.50 (no power). 2a never beats OR/2b and loses 9 times: what separates the
+  arms is access to measurements, consistent with threat 16.
+
+15.4 The important finding (threats items 32-33)
+  The OR engine's two misses have one cause: the faster candidate has much WORSE
+  EXPLAIN estimates (ap18: cost 536,529 vs 15,304; Q18: 8.7M vs 1.6M). The estimate
+  criteria carry the smallest AHP weights but vote loudly because their raw values
+  differ by orders of magnitude while runtime differs by ~30% (vector
+  normalisation). A post-hoc, dev-only diagnostic (nothing adopted):
+     design                                   sum ln(ratio) over 6 queries
+     current 4-criteria TOPSIS (arm 3)        -3.69
+     measured only (runtime + rows_examined)  -4.28   = matches hindsight-best everywhere
+     4 criteria on a log scale                -3.93
+     runtime only (+ guard)                   -4.28   = identical picks to measured-only
+  Caveats: 2 informative queries, one family (derived-table rewrites), chosen after
+  seeing the result. And a consequence worth facing: if measured-only is right, the
+  AHP/TOPSIS machinery adds nothing over "pick the fastest measured candidate".
+
+15.5 What is needed from you now
+  DECISION (arm 3 design), options:
+    A  Keep arm 3 exactly as designed (a priori). Honest, but it trails 2b on dev.
+    B  Switch arm 3 to measured-only (re-normalised AHP weights, same judgments:
+       runtime 0.75 / rows_examined 0.25) and drop the estimate columns from
+       BOTH arm 3 and the 2b table (rule 4: same table). Dev-tuned: must be
+       disclosed, frozen, and rests on 2 queries.
+    C  (recommended) Keep arm 3 as the a-priori PRIMARY arm and add "3-measured" as a
+       declared secondary arm now, before any test run. Both are scored from the same
+       data (the evaluation pass measures every alternative), so it costs nothing,
+       avoids picking the winner after seeing dev, and reports both honestly.
+  Also still open: pool productivity (9 of 15 dev queries have no choice) and the
+  final provider (Groq vs Ollama). Then: freeze everything, commit, run test ONCE.

@@ -160,3 +160,37 @@ the final list.
     once, from a committed state; dev runs are for tuning and may be repeated.
 30. **Wall-clock timing includes fetching rows to the client** over the loopback/Docker network,
     identically for all candidates, but queries returning many rows are partly network-bound.
+31. **`rows_examined` was defective in dev-001 (found and fixed).** The criterion was read from
+    performance_schema's ROWS_EXAMINED, which misses reads done inside grouped subqueries and
+    derived tables. TPC-H Q18: it reported 1,500,513 (original) and 627 (`c3`) where MySQL's own
+    Handler_read_* counters show 9,002,201 and 6,002,313; a plain COUNT(*) over 16,044 rows showed
+    0. Arms 2b and 3 both saw the wrong column in dev-001 (equally, so their comparison stayed
+    like-for-like, but it did not mean what config/ahp.yaml says). It is now the Handler_read_*
+    delta around the last timed run. dev-001 is kept as a record of the defective run and must not
+    be reported as a result; dev-002 is the first run with the fixed metric. Found by looking at
+    the one query where OR and 2b disagreed, not by looking at which arm won overall.
+32. **TOPSIS design weaknesses seen in dev-001 (not yet changed).** (a) Vector normalisation lets a
+    large outlier alternative (Q18 `c2`: 9 s) shrink the runtime gap between the others. (b) The
+    EXPLAIN estimates (weights 0.12 + 0.07) can disagree with measurement: for Q18 `c3`, EXPLAIN
+    says cost 8.7M vs 1.6M for the original while it actually runs 27% faster. Changing the
+    normalisation or dropping the estimate criteria would be tuning arm 3 on the dev set, which is
+    allowed (tune on dev, report on test) but is based on very few contested queries; it must be
+    decided deliberately and frozen before the test run.
+33. **Dev-003: the OR engine trailed 2b on the contested queries (post-hoc diagnosis).** On the 6
+    contested dev queries OR won 2 and 2b won 4 (wins vs baseline). Both OR misses (`ap18`,
+    `tpch_q18`) have the same cause: the genuinely faster candidate had far worse EXPLAIN
+    estimates (cost 536,529 vs 15,304; 8.7M vs 1.6M), and the estimate criteria, despite the
+    smallest AHP weights, outvote runtime because their values differ by orders of magnitude while
+    runtime differs by ~30% (vector normalisation works on raw magnitudes). A post-hoc dev-only
+    diagnostic scored four designs from the same evaluation pass (sum of ln ratio over the 6
+    queries, lower is better): current 4-criteria -3.69; measured-only (runtime + rows examined)
+    -4.28; 4 criteria on a log scale -3.93; runtime-only -4.28. Measured-only and runtime-only make
+    identical picks and match the hindsight-best alternative everywhere. Caveats: two queries,
+    one family (derived-table rewrites), chosen after seeing the result. If measured-only is
+    adopted it is dev-tuned and must be disclosed as such; and it implies that on this data the
+    multi-criteria machinery adds nothing over "pick the fastest measured candidate with a noise
+    guard". Not adopted yet; arm 3 is unchanged from its a-priori design.
+34. **dev-002 is contaminated by a network outage** (21 Groq calls failed with DNS errors on `ap03`,
+    `ap15`, `ap17`, scored as the original). The arms that do not call the LLM are unaffected.
+    The client now retries dropped connections (5/15/45 s) and the runner labels such failures
+    `llm_unreachable` instead of `llm_failure`. dev-003 is the first clean dev run.

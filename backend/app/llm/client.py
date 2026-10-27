@@ -92,10 +92,17 @@ class LLMClient:
         return r.json()["choices"][0]["message"]["content"]
 
     def _post(self, url: str, body: dict, headers: dict | None = None, tries: int = 4) -> httpx.Response:
-        """POST with backoff on 429 (rate limit) and 5xx. Retrying does not change the request, so it
-        cannot change the answer's distribution; it only waits. The final failure is raised."""
+        """POST with backoff on 429 / 5xx (honouring Retry-After) and on transport errors (DNS failure, refused or
+        dropped connection), which wait longer (5, 15, 45 s) so a short network blip is ridden out. Retrying never
+        changes the request, so it cannot change the answer's distribution. The final failure is raised."""
         for attempt in range(tries):
-            r = self._http.post(url, json=body, headers=headers)
+            try:
+                r = self._http.post(url, json=body, headers=headers)
+            except httpx.TransportError:
+                if attempt == tries - 1:
+                    raise
+                self._sleep(5.0 * 3**attempt)
+                continue
             if r.status_code != 429 and r.status_code < 500:
                 break
             if attempt < tries - 1:

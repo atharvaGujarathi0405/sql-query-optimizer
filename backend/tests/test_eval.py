@@ -176,3 +176,12 @@ def test_report_covers_every_section_and_counts_failures(pools, fake_llm):
                     "3  OR engine", "2a LLM", "pool_missing", "Wilcoxon"):
         assert section in text, section
     assert "complete=True" in text
+
+
+def test_an_unreachable_provider_is_a_separate_failure_kind_with_the_same_scoring(pools, fake_llm):
+    pool_dir, qs, out = pools
+    path = run("t8", "ollama", qs[:1], client=fake_llm(fail="ConnectError: [Errno 11001] getaddrinfo failed"),
+               split="all", pool_dir=pool_dir, out_dir=out, repeats=1)
+    recs = records(path)
+    assert {r["kind"] for r in recs if r["type"] == "failure"} == {"llm_unreachable"}
+    assert all(a["pick"] == "original" and a["fallback"] for a in recs if a["type"] == "arm" and a["arm"] in ("2a", "2b"))

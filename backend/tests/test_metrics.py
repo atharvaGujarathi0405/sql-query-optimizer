@@ -55,3 +55,14 @@ def test_collect_timeout_is_an_outcome_not_a_runtime(cur):
 def test_collect_error_is_recorded(cur):
     m = collect(cur, "SELECT nope FROM film", 1, 2)
     assert m.outcome == "error" and "nope" in m.error and m.runtime_ms_median is None
+
+
+def test_rows_examined_counts_reads_inside_subqueries_that_performance_schema_misses(cur):
+    # inventory has 4581 rows and is scanned and grouped inside the subquery
+    q = "SELECT COUNT(*) FROM film WHERE film_id IN (SELECT film_id FROM inventory GROUP BY film_id HAVING COUNT(*) > 3)"
+    m = collect(cur, q, warmup=1, runs=3)
+    assert m.outcome == "ok" and m.rows_examined >= 4581
+
+
+def test_rows_examined_is_zero_for_a_query_that_reads_nothing(cur):
+    assert collect(cur, "SELECT 1", warmup=1, runs=2).rows_examined == 0

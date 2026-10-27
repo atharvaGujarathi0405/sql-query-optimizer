@@ -4,7 +4,10 @@
 Runtime is wall-clock around execute()+fetchall() on the reader connection, so it
 includes sending rows to the client, identically for all candidates.
 est_cost / est_rows come from EXPLAIN FORMAT=JSON (no execution). rows_examined is
-what MySQL actually read, from performance_schema's statement history.
+what MySQL actually read: the delta of the session's Handler_read_* counters around the last timed
+run. performance_schema's ROWS_EXAMINED is deliberately NOT used: it misses reads done inside grouped
+subqueries and derived tables (TPC-H Q18: it reported 1.5M and 627 where the Handler counters show
+9.0M and 6.0M; a COUNT(*) over 16,044 rows showed 0). dev-001 was run with that defective figure.
 """
 import json
 import time
@@ -26,7 +29,7 @@ class Metrics:
     runtime_ms_median: float | None = None
     runtime_ms_iqr: float | None = None
     runs_ms: list[float] = field(default_factory=list)
-    rows_examined: int | None = None
+    rows_examined: int | None = None  # sum of Handler_read_* deltas: the measured-work criterion
     est_cost: float | None = None
     est_rows: float | None = None
 
@@ -63,31 +66,22 @@ def parse_explain(explain_json: str) -> tuple[float | None, float | None]:
     return (float(cost) if cost is not None else None), (sum(rows) if rows else None)
 
 
-def _thread_id(cur) -> int | None:
-    try:
-        cur.execute("SELECT THREAD_ID FROM performance_schema.threads WHERE PROCESSLIST_ID = CONNECTION_ID()")
-        return cur.fetchone()[0]
-    except Exception:
-        return None
+_HANDLER_READS = ("Handler_read_first", "Handler_read_key", "Handler_read_last", "Handler_read_next",
+                  "Handler_read_prev", "Handler_read_rnd", "Handler_read_rnd_next")
 
 
-def _rows_examined(cur, tid: int | None) -> int | None:
-    """ROWS_EXAMINED of the last COMPLETED statement on this connection. Call it right after the run
-    being measured, with nothing in between (the thread id is therefore looked up beforehand)."""
-    if tid is None:
-        return None
+def _handler_reads(cur) -> int | None:
+    """Total row reads so far on this connection. Reading it adds nothing to itself (calibrated: the idle
+    difference between two consecutive readings is 0)."""
     try:
-        cur.execute("SELECT ROWS_EXAMINED FROM performance_schema.events_statements_history "
-                    "WHERE THREAD_ID = %s ORDER BY EVENT_ID DESC LIMIT 1", (tid,))
-        row = cur.fetchone()
-        return int(row[0]) if row else None
+        cur.execute("SHOW SESSION STATUS LIKE 'Handler_read%'")
+        return sum(int(v) for k, v in cur.fetchall() if k in _HANDLER_READS)
     except Exception:
         return None
 
 
 def collect(cur, sql: str, warmup: int = WARMUP, runs: int = RUNS) -> Metrics:
     m = Metrics()
-    tid = _thread_id(cur)
     try:
         cur.execute("EXPLAIN FORMAT=JSON " + sql)
         m.est_cost, m.est_rows = parse_explain(cur.fetchone()[0])
@@ -98,11 +92,15 @@ def collect(cur, sql: str, warmup: int = WARMUP, runs: int = RUNS) -> Metrics:
         for _ in range(warmup):
             run(cur, sql)
         times = []
-        for _ in range(runs):
+        before = None
+        for i in range(runs):
+            if i == runs - 1:
+                before = _handler_reads(cur)  # outside the timed window
             t = time.perf_counter()
             run(cur, sql)
             times.append((time.perf_counter() - t) * 1000)
-        m.rows_examined = _rows_examined(cur, tid)
+        after = _handler_reads(cur)
+        m.rows_examined = None if before is None or after is None else after - before
     except QueryTimeout as e:
         m.outcome, m.error = "timeout", str(e)
         return m  # remaining repeats skipped; the timeout is recorded once

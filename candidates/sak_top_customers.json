@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "query_id": "sak_top_customers",
+  "dataset": "sakila",
+  "original_sql": "SELECT c.customer_id, c.first_name, c.last_name, SUM(p.amount) AS total\nFROM customer c\nJOIN payment p ON p.customer_id = c.customer_id\nGROUP BY c.customer_id, c.first_name, c.last_name\nORDER BY total DESC, c.customer_id\nLIMIT 10",
+  "created_at": "2026-10-27T07:20:28+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "9d30df3fd04fde14a31d3869d4d9844974f6f0461a76ba4418f7ebaf8626b3d6",
+    "detected_patterns": [],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.145,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 10,
+    "error": ""
+  },
+  "n_proposed": 0,
+  "n_truncated": 0,
+  "candidates": []
+}
