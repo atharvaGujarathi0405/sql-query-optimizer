@@ -58,7 +58,8 @@ def build_messages(sql: str, dataset: str, ddl: str, findings: list) -> list[dic
 
 
 def parse_candidates(text: str) -> list[dict]:
-    """Tolerant extraction of [{'sql','rationale'}] from an LLM answer; raises ValueError if none."""
+    """Tolerant extraction of [{'sql','rationale'}] from an LLM answer. [] is a legitimate answer (nothing to
+    improve); ValueError only for an answer that is malformed."""
     t = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip(), flags=re.I)
     try:
         data = json.loads(t)
@@ -76,7 +77,7 @@ def parse_candidates(text: str) -> list[dict]:
         if isinstance(sql, str) and sql.strip():
             out.append({"sql": sql.strip().rstrip(";").strip(),
                         "rationale": "" if isinstance(it, str) else str(it.get("rationale", ""))[:300]})
-    if not out:
+    if items and not out:  # entries were given but none had SQL: malformed. An empty list is a valid "no rewrite".
         raise ValueError("no usable candidate in the answer")
     return out
 

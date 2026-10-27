@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "query_id": "ap08_arithmetic_on_indexed_column",
+  "dataset": "employees",
+  "original_sql": "SELECT emp_no, salary, from_date\nFROM salaries\nWHERE emp_no - 1 = 10000\n",
+  "created_at": "2026-10-27T06:32:07+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "55ffa2463a4c5bbbdc29d849fa715a757ca8921cf7c3f4d34181d6b33d90a2e7",
+    "detected_patterns": [
+      "function-on-column"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.614,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 17,
+    "error": ""
+  },
+  "n_proposed": 1,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT emp_no, salary, from_date FROM salaries WHERE emp_no = 10001",
+      "rationale": "Rewrite the arithmetic expression to a direct equality comparison so the primary key index on emp_no can be used for a point lookup.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 17,
+        "candidate_rows": 17,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

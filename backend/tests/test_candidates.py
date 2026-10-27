@@ -26,9 +26,18 @@ def test_parse_candidates_variants():
     assert parse_candidates('{"candidates":[{"sql":"SELECT 1;","rationale":"r"}]}') == [{"sql": "SELECT 1", "rationale": "r"}]
     assert parse_candidates('```json\n{"candidates":["SELECT 2"]}\n```')[0]["sql"] == "SELECT 2"
     assert parse_candidates('Sure! Here you go: [{"sql": "SELECT 3"}] hope it helps')[0]["sql"] == "SELECT 3"
-    for bad in ("no json here", '{"candidates": []}', '{"other": 1}', '{"candidates":[{"sql":"  "}]}'):
+    for bad in ("no json here", '{"other": 1}', '{"candidates":[{"sql":"  "}]}'):
         with pytest.raises(ValueError):
             parse_candidates(bad)
+    assert parse_candidates('{"candidates": []}') == []  # "nothing to improve" is an answer, not a failure
+
+
+def test_empty_answer_is_cached_as_an_original_only_pool(conn, tmp_path, fake_llm):
+    llm = fake_llm(text='{"candidates": []}')
+    pool = generate_pool(conn, llm, QID, DS, ORIG, pool_dir=tmp_path)
+    assert "error" not in pool and pool["candidates"] == [] and pool["n_proposed"] == 0
+    assert load_pool(QID, tmp_path) is not None  # cached: arms see the original only, not a missing pool
+    assert generate_pool(conn, llm, QID, DS, ORIG, pool_dir=tmp_path)["cached"] is True and llm.calls == 1
 
 
 def test_every_candidate_is_checked_and_nothing_is_dropped(conn, tmp_path, fake_llm):

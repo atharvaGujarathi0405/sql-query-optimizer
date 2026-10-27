@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "query_id": "tpch_q05",
+  "dataset": "tpch",
+  "original_sql": "SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue\nFROM customer, orders, lineitem, supplier, nation, region\nWHERE c_custkey = o_custkey\n  AND l_orderkey = o_orderkey\n  AND l_suppkey = s_suppkey\n  AND c_nationkey = s_nationkey\n  AND s_nationkey = n_nationkey\n  AND n_regionkey = r_regionkey\n  AND r_name = 'ASIA'\n  AND o_orderdate >= DATE '1994-01-01'\n  AND o_orderdate < DATE '1994-01-01' + INTERVAL 1 YEAR\nGROUP BY n_name\nORDER BY revenue DESC",
+  "created_at": "2026-10-27T07:11:09+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "e7e02581a7a4ac4c0bf3fa33f2ba216ba30976da09a54ed5984c50aed4419e42",
+    "detected_patterns": [],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.218,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 5,
+    "error": ""
+  },
+  "n_proposed": 0,
+  "n_truncated": 0,
+  "candidates": []
+}

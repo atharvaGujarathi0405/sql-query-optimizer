@@ -11,6 +11,7 @@ dependencies = [
     "pulp",
     "simpy",
     "numpy",
+    "scipy",  # Wilcoxon signed-rank test: exact small-sample p-values are not in NumPy and are easy to get wrong by hand
     "pyyaml",
     "httpx",  # HTTP client for Ollama/Groq (was dev-only, for FastAPI TestClient)
 ]

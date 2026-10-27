@@ -10,7 +10,7 @@ MSG = [{"role": "user", "content": "hi"}]
 
 
 def client(handler, cfg=CFG, **kw):
-    return LLMClient(cfg, transport=httpx.MockTransport(handler), **kw)
+    return LLMClient(cfg, transport=httpx.MockTransport(handler), sleep=lambda s: None, **kw)  # never really sleep
 
 
 def ollama_ok(request):
@@ -34,7 +34,8 @@ def test_temperature_and_seed_are_sent_to_both_providers():
 
     r = client(handler).chat(MSG, json_mode=True)
     assert r.provider == "groq"
-    o, g = seen[0][1], seen[1][1]
+    o = next(b for u, b in seen if "ollama.test" in u)  # (a 500 is retried, so there are several ollama requests)
+    g = next(b for u, b in seen if "groq.com" in u)
     assert o["options"] == {"temperature": 0.0, "seed": 42} and o["format"] == "json"
     assert g["temperature"] == 0.0 and g["seed"] == 42 and g["response_format"] == {"type": "json_object"}
 
@@ -85,3 +86,30 @@ def test_every_attempt_is_appended_to_the_jsonl_log(tmp_path):
     client(lambda req: httpx.Response(500) if "ollama.test" in str(req.url) else ollama_ok(req), log_path=log).chat(MSG)
     rows = [json.loads(line) for line in log.read_text().splitlines()]
     assert [(r["provider"], r["ok"]) for r in rows] == [("ollama", False), ("groq", True)]
+
+
+def test_rate_limit_is_retried_with_retry_after_then_succeeds():
+    calls, sleeps = [], []
+
+    def handler(request):
+        calls.append(1)
+        if len(calls) < 3:
+            return httpx.Response(429, headers={"retry-after": "7"})
+        return httpx.Response(200, json={"message": {"content": "finally"}})
+
+    r = LLMClient(CFG, transport=httpx.MockTransport(handler), sleep=sleeps.append).chat(MSG, provider="ollama")
+    assert r.text == "finally" and len(calls) == 3 and sleeps == [7.0, 7.0]
+    assert len(r.attempts) == 1  # one logical call, however many HTTP retries it took
+
+
+def test_persistent_rate_limit_ends_as_a_logged_failure():
+    sleeps = []
+    r = LLMClient(CFG, transport=httpx.MockTransport(lambda req: httpx.Response(429)), sleep=sleeps.append).chat(MSG, provider="ollama")
+    assert r.text is None and "429" in r.error and len(sleeps) == 3
+
+
+def test_client_errors_other_than_429_are_not_retried():
+    sleeps, calls = [], []
+    LLMClient(CFG, transport=httpx.MockTransport(lambda req: (calls.append(1), httpx.Response(404))[1]),
+              sleep=sleeps.append).chat(MSG, provider="ollama")
+    assert len(calls) == 1 and sleeps == []

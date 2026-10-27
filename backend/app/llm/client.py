@@ -44,10 +44,11 @@ class LLMResponse:
 
 class LLMClient:
     def __init__(self, cfg: LLMConfig | None = None, transport: httpx.BaseTransport | None = None,
-                 log_path: Path | None = None):
+                 log_path: Path | None = None, sleep=time.sleep):
         self.cfg = cfg or llm_config()
         self._http = httpx.Client(transport=transport, timeout=self.cfg.timeout_s)
         self.log_path = log_path
+        self._sleep = sleep
 
     def chat(self, messages: list[dict], provider: str | None = None, json_mode: bool = False) -> LLMResponse:
         if provider is not None and provider not in PROVIDERS:
@@ -79,18 +80,29 @@ class LLMClient:
                     "options": {"temperature": c.temperature, "seed": c.seed}}
             if json_mode:
                 body["format"] = "json"
-            r = self._http.post(f"{c.ollama_host}/api/chat", json=body)
-            r.raise_for_status()
+            r = self._post(f"{c.ollama_host}/api/chat", body)
             return r.json()["message"]["content"]
         if not c.groq_api_key:
             raise RuntimeError("GROQ_API_KEY not set")
         body = {"model": c.groq_model, "messages": messages, "temperature": c.temperature, "seed": c.seed}
         if json_mode:
             body["response_format"] = {"type": "json_object"}  # Groq requires the word JSON in the prompt
-        r = self._http.post("https://api.groq.com/openai/v1/chat/completions", json=body,
-                            headers={"Authorization": f"Bearer {c.groq_api_key}"})
-        r.raise_for_status()
+        r = self._post("https://api.groq.com/openai/v1/chat/completions", body,
+                       headers={"Authorization": f"Bearer {c.groq_api_key}"})
         return r.json()["choices"][0]["message"]["content"]
+
+    def _post(self, url: str, body: dict, headers: dict | None = None, tries: int = 4) -> httpx.Response:
+        """POST with backoff on 429 (rate limit) and 5xx. Retrying does not change the request, so it
+        cannot change the answer's distribution; it only waits. The final failure is raised."""
+        for attempt in range(tries):
+            r = self._http.post(url, json=body, headers=headers)
+            if r.status_code != 429 and r.status_code < 500:
+                break
+            if attempt < tries - 1:
+                wait = r.headers.get("retry-after")
+                self._sleep(min(float(wait) if wait and wait.replace(".", "", 1).isdigit() else 2.0 * 2**attempt, 60))
+        r.raise_for_status()
+        return r
 
     def _log(self, a: Attempt) -> None:
         log.info("llm provider=%s model=%s ok=%s latency=%.2fs %s", a.provider, a.model, a.ok, a.latency_s, a.error)

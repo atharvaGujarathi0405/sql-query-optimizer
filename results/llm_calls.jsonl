@@ -1,0 +1,31 @@
+{"provider": "groq", "model": "llama-3.3-70b-versatile", "ok": false, "latency_s": 0.386, "error": "HTTPStatusError: Client error '404 Not Found' for url 'https://api.groq.com/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"}
+{"provider": "groq", "model": "llama-3.3-70b-versatile", "ok": false, "latency_s": 0.466, "error": "HTTPStatusError: Client error '404 Not Found' for url 'https://api.groq.com/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.614, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.868, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.673, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.445, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.214, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.419, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.77, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.306, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.218, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.3, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.242, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.22, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.332, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.231, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.749, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.274, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.267, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.512, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 9.429, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.294, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.21, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.232, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.24, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.343, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.784, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.266, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.344, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.335, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.818, "error": ""}

@@ -32,3 +32,16 @@ python scripts/validate_queries.py    # one run per query, timeout from config/r
 ```
 
 Threats to validity are tracked in `docs/threats_to_validity.md`.
+
+## Evaluation (Phase 3)
+
+```sh
+# 1. candidate pools: one provider for the whole run, checked before caching, written to candidates/
+python scripts/generate_pools.py --provider groq --split dev --limit 5
+# 2. the three-arm run (arms 1, 2a, 2b, 3, plus 3-raw); refuses the test split without --allow-test
+python -m app.eval.runner --run-id dev-001 --provider groq --split dev
+# 3. report: per-arm medians, win/tie/loss, OR-vs-LLM Wilcoxon + effect size, failure table
+python -m app.eval.report results/dev-001.jsonl
+```
+
+Tune on dev only. Run the test split once, from a clean git tree, with `--allow-test`.

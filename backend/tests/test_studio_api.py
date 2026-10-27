@@ -42,8 +42,9 @@ def test_optimize_returns_candidates_validity_metrics_ranking_and_winner(api):
         assert 0 <= a["topsis_closeness"] <= 1
 
     # ranking is by closeness, winner is its head, weights are the fixed AHP ones
-    assert sorted(body["ranking"]) == ["c1", "original"] and body["winner"] == body["ranking"][0]
-    assert alts[body["winner"]]["topsis_closeness"] >= alts[body["ranking"][1]]["topsis_closeness"]
+    assert sorted(body["ranking"]) == ["c1", "original"] and body["winner_raw"] == body["ranking"][0]
+    assert body["winner"] in (body["winner_raw"], "original")  # the noise guard may only fall back to the original
+    assert alts[body["ranking"][0]]["topsis_closeness"] >= alts[body["ranking"][1]]["topsis_closeness"]
     assert body["criteria"] == ["runtime_ms", "rows_examined", "est_cost", "est_rows"]
     assert sum(body["weights"]) == pytest.approx(1.0) and body["ahp"]["consistency_ratio"] < 0.1
     assert body["pool"]["generator"]["provider"] == "ollama" and body["pool"]["n_valid"] == 1

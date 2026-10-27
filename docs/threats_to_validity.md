@@ -113,7 +113,50 @@ the final list.
     Weights (AHP, CR 0.007) were set a priori on reasoning, not tuned, and
     are fixed in `config/ahp.yaml`.
 
-## To be added in Phase 3
+## Evaluation harness (found while building Phase 3)
 
-LLM variance across repeats, prompt sensitivity, and selection bias in how the
-pool was generated and which pools are kept.
+21. **Sample size.** Dev has 15 queries, test 25 (13 anti-pattern, 7 TPC-H standard, 5 control).
+    Many queries will have original-only pools (the generator proposed nothing for 3 of 5 dry-run
+    queries), and every arm ties there by construction, so the number of *contested* queries is
+    smaller still (the report prints it). Wilcoxon on a handful of non-identical pairs has almost no
+    power: with 2 non-identical pairs the smallest possible two-sided p is 0.5. Read effect sizes
+    and counts; do not claim significance from the dry run or from per-category cells.
+22. **LLM variance is only partly measured.** Temperature 0 and a fixed seed make repeats
+    near-identical, so the 5 repeats of arms 2a/2b differ mainly by option order (seeded shuffle,
+    identical for 2a and 2b within a repeat). The reported variance is therefore order sensitivity
+    plus whatever nondeterminism Groq's serving adds (a seed is sent but not guaranteed
+    deterministic). It is not sampling variance at a nonzero temperature. Arm 3 has no repeat
+    variance at all: one selection pass per query, so its measurement noise is not resampled.
+23. **Cache state and pass-to-pass noise.** The selection and evaluation passes run back to back
+    in one process on a warm 3 GiB pool (residency still unverified). In the dry run the same
+    alternative's median differed between the two passes by up to 19% (`ap03` c3: 855 vs 1021 ms),
+    more than the 5% tie band, and the IQR differed by up to 10x (`ap03` original: 8.5 vs 63.2 ms).
+    Wins and losses near the band are noise-limited on this machine (Windows host, Docker VM,
+    background load). Scoring from a single evaluation pass per alternative gives all arms the
+    same number, which removes noise *between arms* but not noise *in* the number.
+24. **Query selection bias.** The anti-pattern set is author-written (threat 1), pools come from
+    one LLM that returned `[]` for several queries, and queries without a rewrite cannot
+    discriminate between arms. Pool generation is conservative, which understates what an OR
+    engine could gain from a more productive generator. Pools are not re-rolled after seeing arm
+    results.
+25. **The generator and the arm-2 selector are the same model** (`qwen/qwen3.8-27b` via Groq). Arm 2
+    chooses among options its own sibling call proposed, which may favour it (self-preference) and
+    means arm 2 and the pool share blind spots. The OR engine has no such coupling.
+26. **Test-split queries were seen before evaluation.** During Phase 2 acceptance I ran
+    `ap08` (real Groq pool and timings: 924 ms to 1.9 ms with a trivial rewrite), `ap19` (scripted
+    candidates and timings) and `ap02` (scripted candidates in unit/API tests), all in the **test**
+    split. Nothing was tuned on them (AHP weights, the noise guard, the tie band and the prompts
+    were all fixed without reference to their results), but their baseline timings, and for `ap08` the
+    pool, were seen. Their pools and timings are not hidden or re-rolled.
+27. **Failure scoring policy.** A failed or unparseable LLM answer, an unusable OR result or a
+    missing/mismatched pool is logged and scored as the original (baseline time, a tie). This is the
+    same for every arm but biases win/loss counts toward ties. Failures are counted separately.
+28. **The OR noise guard is a design choice made without evaluation data** (1.0 x IQR). The raw
+    TOPSIS pick (`3-raw`) is scored from the same measurements, so the guard can be judged on the
+    dev set; it must not be retuned on test. After the first test-split run it is frozen like the
+    split.
+29. **Traceability.** The runner records the git commit and whether the tree was dirty (the dry run
+    was dirty). It refuses to run the test split from a dirty tree. The test run should happen
+    once, from a committed state; dev runs are for tuning and may be repeated.
+30. **Wall-clock timing includes fetching rows to the client** over the loopback/Docker network,
+    identically for all candidates, but queries returning many rows are partly network-bound.

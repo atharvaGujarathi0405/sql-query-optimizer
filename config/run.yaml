@@ -24,3 +24,14 @@ timed_runs: 5
 
 # Candidate pool size requested from the generator (the cap on candidates kept per query).
 candidates_per_query: 5
+
+# --- Evaluation harness (Phase 3). Fixed before any evaluation run.
+# Repeats per query for the LLM arms (2a, 2b); fairness rule 6 asks for >= 5.
+llm_repeats: 5
+# A pick counts as a win/loss against the baseline only if its median runtime differs from the
+# baseline's by more than max(baseline IQR, tie_band_pct % of baseline median); otherwise a tie.
+tie_band_pct: 5
+# OR-engine noise guard (see optimizer/decision.py): keep the original unless the TOPSIS winner
+# beats it by more than this many baseline IQRs. 0 disables. The raw TOPSIS pick is always recorded
+# as arm "3-raw" so the guard can be judged on the dev set from the same measurements.
+or_noise_guard_iqr_multiple: 1.0
