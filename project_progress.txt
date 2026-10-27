@@ -1,0 +1,496 @@
+================================================================================
+SQL QUERY OPTIMIZER : OR ENGINE vs LLM SELF-SELECTION
+PROJECT PROGRESS REPORT
+Written 2026-10-27, after Phase 3 (commit 42bb76a). Phases 4, 5, 6 not started.
+================================================================================
+
+CONTENTS
+  1. What the project is
+  2. Status at a glance
+  3. The environment everything runs on
+  4. Phase 0 - scaffold and infrastructure
+  5. Phase 1 - data, queries, split
+  6. Phase 2 - Query Studio core
+  7. Phase 3 - three-arm evaluation harness
+  8. How each fairness rule is implemented
+  9. Problems found along the way (and how each was fixed)
+ 10. What is NOT verified
+ 11. Known threats to validity (summary)
+ 12. What remains
+ 13. How to run things
+ 14. Repository layout and uncommitted state
+
+
+--------------------------------------------------------------------------------
+1. WHAT THE PROJECT IS
+--------------------------------------------------------------------------------
+Thesis (CLAUDE.md): an operations-research decision engine picks better SQL
+query optimizations than an LLM choosing for itself.
+
+Three arms are compared on identical queries, data, hardware and MySQL config:
+  Arm 1   plain MySQL optimizer on the original query (baseline)
+  Arm 2   LLM self-selection, in two variants:
+            2a  sees only SQL text + schema
+            2b  also sees the same EXPLAIN / measured-metric table the OR engine uses
+  Arm 3   OR engine: AHP (criteria weights) + TOPSIS (ranking)
+  (Arm 3-raw is arm 3 without the noise guard; it exists only for a dev-set
+   ablation and is scored from the same data.)
+
+Arms 2 and 3 choose from the SAME pool of candidate rewrites, generated once per
+query and cached to disk. The OR-vs-LLM comparison is the core contribution, so
+every design decision is meant to keep it fair. Stack: FastAPI, MySQL 8.4 in
+Docker, SQLGlot, NumPy, SciPy (added in Phase 3 for Wilcoxon), PuLP + CBC and
+SimPy (planned, Phases 4-5), React/Vite/Tailwind (planned, Phase 6).
+
+
+--------------------------------------------------------------------------------
+2. STATUS AT A GLANCE
+--------------------------------------------------------------------------------
+Commits (all on branch main):
+  deb3381  2026-10-26  Phase 0: scaffold, MySQL infra, /health, privilege tests
+  5c45b71  2026-10-27  Phase 1: datasets, 40-query registry, frozen split, run metadata
+  3dc02e1  2026-10-27  Raise InnoDB buffer pool from 2 GiB to 3 GiB
+  96a55a8  2026-10-27  Phase 2: Query Studio core
+  37c3385  2026-10-27  Phase 2 real run on Groq: fix stale model, provider guard
+  42bb76a  2026-10-27  Phase 3: three-arm evaluation harness + Groq dev dry run
+
+  Phase 0  DONE    acceptance check run and passed
+  Phase 1  DONE    acceptance check run and passed (30/30 table counts match)
+  Phase 2  DONE    pytest passes; real LLM run on ONE query (Groq). Ollama never
+                   ran (model could not be downloaded) - see section 10
+  Phase 3  DONE    dry run on 5 dev queries completed end to end. It is a
+                   pipeline check, NOT a result (only 2 of 5 queries had a choice)
+  Phase 4  NOT STARTED   Workload Advisor (ILP index selection)
+  Phase 5  NOT STARTED   Scale Simulator (M/M/c + SimPy)
+  Phase 6  NOT STARTED   React/Vite/Tailwind frontend + results dashboard
+
+  Tests: 186 passing (backend/tests, 13 files). 40 queries registered.
+  The real evaluation (full dev tuning run, then ONE test run) has NOT been done.
+
+
+--------------------------------------------------------------------------------
+3. THE ENVIRONMENT EVERYTHING RUNS ON
+--------------------------------------------------------------------------------
+Host:      Windows 11 Home, Intel Core i5-8300H (8 logical cores), 15.8 GiB RAM
+Docker:    Docker Engine 29.7.2 in Docker Desktop 4.86.0 (WSL2); the Docker VM has 7.7 GiB
+MySQL:     8.4.13 in Docker (image pinned to the exact patch version)
+           innodb_buffer_pool_size = 3 GiB (verified live from the server)
+           collation utf8mb4_0900_ai_ci, binary log off, local_infile OFF by
+           default (switched on only during the TPC-H load, then verified 0)
+           Settings are passed as `command:` flags in docker-compose.yml.
+Port:      3307 on the host (a local MySQL already holds 3306). Bound to 127.0.0.1.
+Python:    3.13.3. Dependencies in backend/pyproject.toml.
+LLM:       Groq, model qwen/qwen3.8-27b, temperature 0, seed 42.
+           Ollama is installed but has NO model (qwen2.5-coder:7b downloads
+           stalled three times at 5-10% of 4.7 GB on this connection).
+Users:     `reader` (SELECT only) runs every candidate and every measurement.
+           `admin` is used only for seeding data (and later, index experiments).
+           `root` is used only to flip local_infile during the TPC-H load.
+Secrets:   in .env (gitignored); .env.example has placeholders only.
+Data size: all three datasets together measure 1.71 GiB (TPC-H 1.56 GiB) = ~57%
+           of the buffer pool. Residency during timed runs is NOT yet verified.
+
+
+--------------------------------------------------------------------------------
+4. PHASE 0 - SCAFFOLD AND INFRASTRUCTURE  (deb3381)
+--------------------------------------------------------------------------------
+Built:
+  - Repo layout per CLAUDE.md (backend/app/{api,core,llm,optimizer,advisor,
+    simulator,eval}, config/, data/, candidates/, results/, docker/, bruno/,
+    scripts/, frontend/).
+  - docker-compose.yml: MySQL 8.4 with a persistent volume and a TCP healthcheck.
+  - docker/mysql/init/01-init-users.sh: creates `reader` (SELECT) and `admin`
+    (ALL) on the optimizer schema and the three dataset schemas; reader also
+    gets SELECT on performance_schema (needed for rows-examined metrics).
+  - FastAPI skeleton with GET /health that checks DB connectivity THROUGH the
+    reader user (503 if the DB is down).
+  - pytest: health smoke test; privilege test (reader's INSERT is denied with
+    error 1142, admin's INSERT works).
+
+Acceptance check (run and shown): curl /health returned
+{"status":"ok","db":"connected"}; reader failed an INSERT while admin succeeded;
+pytest passed.
+
+Defects in this phase that were found LATER and fixed (details in section 9):
+the "fixed 2 GB buffer pool" in my.cnf was silently ignored (see 9.1), and the
+healthcheck could report healthy before the real server was up (see 9.2).
+
+
+--------------------------------------------------------------------------------
+5. PHASE 1 - DATA, QUERIES, SPLIT  (5c45b71, 3dc02e1)
+--------------------------------------------------------------------------------
+5.1 Datasets (loaded and verified)
+  Employees   datacharmer/test_db tag v1.0.7 = commit e5f310ac...
+  Sakila      downloads.mysql.com/docs/sakila-db.tar.gz
+              (unversioned URL; archive SHA-256 683e957d... recorded)
+  TPC-H SF1   generated by dbgen 2.14.0 from electrum/tpch-dbgen commit 32f1c1b9...
+              (a public mirror, not the official TPC kit). Built AND run inside a
+              digest-pinned gcc container with --network none, source mounted
+              read-only, only data/raw mounted. No manual downloads are needed.
+  scripts/fetch_data.py   downloads/pins/hashes everything; writes
+                          data/raw/SOURCES.txt (URL, ref, archive SHA-256, dbgen
+                          version, image id, SHA-256 of every generated .tbl)
+  scripts/load_data.py    loads as admin; ANALYZE TABLE after each load so
+                          optimizer statistics are identical for every arm
+  scripts/tpch_schema.sql keeps only PK/FK indexes (no extra secondary indexes)
+
+5.2 Row-count check (scripts/check_counts.py, COUNT(*) as reader)
+  All 30 tables match the expected values. One expected value was changed with
+  the user's explicit approval: sakila.payment is 16,044 (not 16,049). The
+  downloaded archive itself contains 16,044 payments (ids 424, 7011, 10840,
+  14675, 15458 are absent from the file); the loader dropped nothing. The
+  change and its reason are written next to the value in data/expected_counts.yaml.
+
+5.3 The 40-query registry (data/queries.yaml, built by scripts/build_registry.py)
+  22 anti-pattern queries (data/antipatterns/ap01..ap22, hand-written, one file
+     each with a header naming the anti-pattern): SELECT *, function/arithmetic
+     on a column, correlated subqueries (WHERE and SELECT list), NOT IN, OR
+     across columns, implicit cast, leading-wildcard LIKE, redundant DISTINCT,
+     HAVING instead of WHERE, deep OFFSET, UNION vs UNION ALL.
+   8 control queries (plain Employees/Sakila queries with no deliberate
+     anti-pattern; "keep the original" is a valid answer for these).
+  10 TPC-H standard queries: Q1, Q3, Q4, Q5, Q6, Q10, Q12, Q14, Q17, Q18.
+  Feasibility check (scripts/validate_queries.py, one run each as reader):
+  40 ok, 0 error, 0 empty, 0 timeout, 0 LIMIT-without-ORDER-BY. Slowest was
+  TPC-H Q1 at about 21 s; most take under 1 s. No query was changed or dropped.
+  I also checked that no ORDER BY has ties on the loaded data (including the
+  top-10 cut-off of Q3) and that no single-row aggregate is NULL.
+
+5.4 Split (data/splits.yaml): dev 15 / test 25, stratified by dataset, seed
+  20261027, generated once and FROZEN (the build script refuses to overwrite it).
+    dev  : 9 anti-pattern, 3 TPC-H standard, 3 control
+    test : 13 anti-pattern, 7 TPC-H standard, 5 control
+  Checked by dataset x category; mild skew (TPC-H standard 3 dev / 7 test), so
+  it was NOT regenerated. The reasoning is recorded inside splits.yaml.
+
+5.5 Config and recording
+  config/run.yaml: query timeout 120 s (about 6x the slowest baseline), 2 warm-up
+  runs + 5 timed runs, 5 candidates per query, 5 LLM repeats, tie band 5%, OR
+  noise guard 1.0 x IQR.
+  backend/app/eval/runinfo.py: every results file records MySQL version, the LIVE
+  buffer pool size, collation, other server settings, CPU, cores, host RAM,
+  Docker VM RAM, python version, git commit and whether the tree was dirty.
+  docs/threats_to_validity.md started.
+  3dc02e1 raised the buffer pool 2 GiB -> 3 GiB (the data left only ~14% headroom).
+
+
+--------------------------------------------------------------------------------
+6. PHASE 2 - QUERY STUDIO CORE  (96a55a8, 37c3385)
+--------------------------------------------------------------------------------
+backend/app/optimizer/
+  analysis.py    SQLGlot parsing + anti-pattern detection from SQL text and schema
+                 only (never from the registry's labels). Detects select-star,
+                 function-on-column, correlated-subquery, not-in, or-across-
+                 columns, leading-wildcard-like, implicit-cast (schema aware),
+                 distinct, having-instead-of-where, union-vs-union-all,
+                 deep-offset, subquery-in-select. Finds the labelled pattern in
+                 all 22 anti-pattern queries and flags nothing on the clean ones
+                 (except genuinely correlated TPC-H Q4/Q17).
+  checker.py     Correctness checker (fairness rule 3): row count, then order-
+                 insensitive MULTISET comparison (exact sequence when the
+                 outermost query has ORDER BY). NULL equals only NULL; a string
+                 never equals a number; numbers compare by value. Anything that
+                 is not exactly one SELECT is rejected BEFORE it runs. Every
+                 failure carries a reason (not_select, exec_error, timeout,
+                 col_count_mismatch, row_count_mismatch, rows_mismatch,
+                 order_mismatch, original_failed).
+  execution.py   One place that runs queries as reader with MySQL's
+                 max_execution_time; timeouts raise their own exception.
+  metrics.py     Per-alternative metrics: median + IQR of 5 timed runs after 2
+                 discarded warm-ups, EXPLAIN FORMAT=JSON cost and estimated rows,
+                 and MEASURED rows examined (performance_schema). A timeout is an
+                 outcome, never a runtime.
+  mcdm.py        AHP (principal eigenvector, consistency ratio asserted < 0.1 on
+                 load) and TOPSIS in NumPy. Ties go to the original (index 0).
+  candidates.py  Candidate pool: generated once, checked BEFORE caching, written
+                 to candidates/<query_id>.json with provenance (provider, model,
+                 temperature, seed, prompt hash, detected patterns). Invalid and
+                 duplicate candidates stay in the file with reasons; the 5-candidate
+                 cap is recorded (n_proposed / n_truncated). An LLM outage or a
+                 malformed answer is reported and NOT cached.
+  decision.py    The OR engine's decision as one pure function (TOPSIS + noise
+                 guard), shared by the Studio endpoint and the evaluation runner.
+  studio.py      pool -> metrics -> ranking -> winner.
+backend/app/llm/client.py   Ollama primary, Groq fallback, every attempt logged
+                 with the provider that answered (results/llm_calls.jsonl).
+                 Temperature and seed sent to both. `provider=` pins one provider
+                 with no fallback. Retries 429/5xx with backoff.
+backend/app/api/studio.py   POST /studio/optimize (registry id or ad-hoc
+                 dataset+sql) returning candidates, validity flags, metrics, TOPSIS
+                 ranking and winner. bruno/ holds the API collection (not yet
+                 opened in Bruno, so its format is unverified).
+
+AHP (config/ahp.yaml, fixed before any evaluation; never tuned):
+  runtime_ms 0.587 | rows_examined 0.218 | est_cost 0.123 | est_rows 0.072
+  lambda_max 4.0192, CI 0.0064, CR 0.0071 (limit 0.1). All four are costs.
+
+Real run (Groq, query ap08, "emp_no - 1 = 10000"): the model answered in 0.6 s with
+one candidate (emp_no = 10001); it passed the correctness check, examined 17 rows
+instead of 2,844,047, ran in 1.9 ms vs 924 ms, and won the TOPSIS ranking.
+
+
+--------------------------------------------------------------------------------
+7. PHASE 3 - THREE-ARM EVALUATION HARNESS  (42bb76a)
+--------------------------------------------------------------------------------
+backend/app/eval/
+  runner.py   Runs arms 1, 2a, 2b, 3, 3-raw over chosen queries from the CACHED
+              pools and writes results/<run_id>.jsonl (run metadata, every
+              measurement, every arm decision per repeat, every failure). It
+              never overwrites a results file, refuses the test split without
+              --allow-test, and refuses the test split from a dirty git tree.
+  llm_arm.py  Prompts and strict answer parsing for 2a / 2b. Options are labelled
+              A, B, C... and shown in a per-(query, repeat) seeded shuffled order,
+              identical for 2a and 2b within a repeat. The 2a prompt contains no
+              measurements and no static-analysis hints (tested).
+  report.py   Per-arm medians; win/tie/loss vs baseline; LLM variance across
+              repeats; paired comparisons (Wilcoxon signed-rank via SciPy +
+              matched-pairs rank-biserial effect size); failure table; how many
+              queries had a real choice.
+scripts/generate_pools.py   generates or reuses pools for a chosen set of queries
+              with ONE pinned provider.
+
+Key design decisions:
+  - TWO measurement passes per query. SELECTION produces the single metric table
+    that arms 2b and 3 both read. EVALUATION re-measures every alternative
+    independently and ALL arms are scored from it. No arm is scored on the
+    numbers it selected from (winner's curse), and arms that pick the same
+    query get the same time, so differences come only from choices.
+  - Win/loss only if the pick's median differs from the baseline's by more than
+    max(baseline IQR, 5% of baseline median); otherwise a tie. Picking the
+    original is scored as the baseline time (rule 8).
+  - A failed LLM answer, an unusable OR result, or a missing/mismatched pool is
+    logged AND scored as the original, identically for every arm.
+  - One provider/model per run; a pool made by another is refused.
+  - OR noise guard: TOPSIS normalises per query, so when plans tie it turns
+    runtime noise into a big closeness gap (observed: 417 vs 453 ms became
+    closeness 1.00 vs 0.19). The guard keeps the original unless the winner beats
+    it by more than 1 x the original's IQR. Set without any evaluation data. The
+    unguarded pick is scored as arm "3-raw".
+
+Dry run dry-001 (dev, 5 queries chosen in advance: ap03, ap12, ap17,
+emp_current_managers, tpch_q05; Groq qwen/qwen3.8-27b): completed in 2 min 10 s,
+no failures logged, report printed every section. What it showed:
+  - Only 2 of 5 queries had a real choice. The generator returned "no rewrite"
+    for ap12, emp_current_managers and tpch_q05, so every arm ties there.
+  - ap03 (5 valid candidates): OR picked c4 and 2b picked c4 (both ~10x faster);
+    2a picked c1 four times and the original once (pick agreement 0.96).
+  - ap17 (1 valid candidate, slower than the original): 2a picked it 5/5 (five
+    losses); OR and 2b kept the original.
+  - This is a pipeline check, not evidence. n is far too small for conclusions.
+
+
+--------------------------------------------------------------------------------
+8. HOW EACH FAIRNESS RULE IS IMPLEMENTED
+--------------------------------------------------------------------------------
+ 1 Same queries/data/hardware/config/method   One registry, one server, one
+                                              measurement protocol (metrics.py)
+                                              for every arm; settings recorded live.
+ 2 Same pool for arms 2 and 3                  candidates/<id>.json; arms only read
+                                              the cache. A pool from another
+                                              provider/model is refused.
+ 3 Check before arms see candidates            checker.py runs before a pool is
+                                              cached; failures kept with reasons.
+ 4 Explicit asymmetry, 2a vs 2b                2a: SQL + schema. 2b: + the exact
+                                              metric table arm 3 ranks. Both
+                                              reported; 3 vs 2b is like-for-like.
+ 5 AHP fixed, dev/test split                   config/ahp.yaml (CR asserted);
+                                              splits.yaml frozen; test needs
+                                              --allow-test and a clean git tree.
+ 6 LLM nondeterminism                          temperature 0, seed 42, 5 repeats for
+                                              2a/2b, mean and variance reported.
+                                              (See threat 22: repeats mostly
+                                              vary by option order.)
+ 7 Timing protocol                             2 warm-up + 5 timed, median + IQR;
+                                              version, live buffer pool,
+                                              collation, hardware, git in every
+                                              results file.
+ 8 Original pick = baseline                    scored as a tie at baseline time.
+ 9 Log every failure, never exclude queries    failure records in the JSONL and a
+                                              failure table in the report.
+
+
+--------------------------------------------------------------------------------
+9. PROBLEMS FOUND ALONG THE WAY (AND HOW EACH WAS FIXED)
+--------------------------------------------------------------------------------
+Several of these were my own mistakes; they are listed so the record is honest.
+
+ 9.1  my.cnf was silently ignored (Phase 0 claim was false).  The Phase 0 commit
+      said the buffer pool was 2 GB. Docker bind mounts from Windows present
+      files as mode 777 and MySQL refuses world-writable config files, so the
+      server ran on defaults (128 MB). Found in Phase 1 from the log line
+      "World-writable config file ... is ignored". Fixed by passing flags in
+      docker-compose.yml, verifying live values, and adding a test that asserts
+      them. No evaluation ran in that window.
+ 9.2  Healthcheck race.  The socket ping was answered by MySQL's temporary init
+      server, so the container looked healthy before the real server was up.
+      Fixed by pinging over TCP.
+ 9.3  Buffer pool too tight.  My "~1.1 GB" size estimate was wrong; the data is
+      1.71 GiB. Raised the pool to 3 GiB before any evaluation.
+ 9.4  Docker/WSL wedged.  Force-killing Docker clients during a slow image pull
+      left the daemon unable to create containers; WSL itself then hung. Fixed
+      by restarting WSL/Docker. Cost a long detour; nothing was lost.
+ 9.5  Loader bugs.  `flush logs;` in the Employees dump needs the RELOAD
+      privilege (dropped in transit instead of widening admin); the mysql
+      client's `source a; source b` is one command (fixed by one per line);
+      Python's traceback printed the admin password on the command line (now
+      passed through the environment).
+ 9.6  sakila.payment count.  See 5.2.
+ 9.7  rows_examined read 1 for a 16,044-row scan.  I looked up the thread id
+      right before reading the statement history, so the lookup was the
+      "latest" statement. Found by a test; fixed.
+ 9.8  A timeout test passed by accident.  MySQL's SLEEP() returns 1 when
+      interrupted instead of raising, which equalled SELECT 1. Replaced with a
+      real runaway scan.
+ 9.9  Groq model name stale.  llama-3.3-70b-versatile no longer exists (HTTP 404,
+      confirmed against Groq's model list). Default is now qwen/qwen3.8-27b.
+ 9.10 Mixed-provider pools.  A cached Groq pool could have been served to an
+      Ollama run. Now refused with an error.
+ 9.11 "No rewrite" treated as a parse failure.  {"candidates": []} is a valid
+      answer; it was reported as unparseable and nothing was cached. Found by
+      the first real multi-query run. Now cached as an original-only pool.
+ 9.12 Ollama model download.  Failed three times mid-transfer (5-10% of 4.7 GB,
+      speed decaying from 2.2 MB/s to 0.6 MB/s). IPv4 and IPv6 both connect in
+      about 70 ms, so it is a mid-transfer stall, not routing. Not resolved.
+ 9.13 Auto-mode classifier blocked running fetch_data.py (it downloads and
+      builds external code). The user ran it; the script was audited first.
+ 9.14 Test-split queries seen early.  See threat 26 (section 11).
+ 9.15 The tooling's shell choked on large heredocs several times; files were
+      then written with the file tools. No effect on the code.
+
+
+--------------------------------------------------------------------------------
+10. WHAT IS NOT VERIFIED
+--------------------------------------------------------------------------------
+  - Ollama / Qwen2.5-Coder has never run. CLAUDE.md names it as the primary
+    provider; everything so far used Groq's qwen/qwen3.8-27b (a different, larger
+    model). The pools in candidates/ are Groq pools.
+  - The buffer pool actually holding the data during timed runs (should check
+    that Innodb_buffer_pool_reads stays flat).
+  - The Bruno collection has not been opened in Bruno.
+  - Whether the OR noise guard helps or hurts: not judged, only 2 contested
+    queries so far.
+  - dbgen's "compiled-in seeds give identical output on every run" is from
+    knowledge, not tested. The .tbl SHA-256s are recorded so a second
+    generation can prove it.
+  - Pool coverage: pools exist for only 6 of 40 queries.
+  - The only real LLM-arm calls so far are the 20 in the dry run (2 queries).
+  - The frontend, advisor and simulator directories are empty placeholders.
+
+
+--------------------------------------------------------------------------------
+11. KNOWN THREATS TO VALIDITY (SUMMARY)
+--------------------------------------------------------------------------------
+Full text: docs/threats_to_validity.md, items 1-30. Headlines:
+  Query set       22 of 40 queries are author-written anti-patterns (rewritable
+                  by construction); test has 25 queries (13/7/5); weak oracles
+                  (several queries return one row).
+  Environment     one Windows machine, Docker VM, background noise: the same
+                  alternative differed by up to 19% between the two passes in the
+                  dry run, more than the 5% tie band; warm cache by design;
+                  timings include fetching rows to the client.
+  Data            TPC-H is a public dbgen mirror (not the official TPC kit);
+                  Sakila payment is 16,044 rows.
+  Pool/generator  one LLM, capped at 5, often proposes nothing; the arm-2
+                  selector is the SAME model as the generator (self-preference);
+                  Groq is a different model from the specified Ollama one.
+  OR engine       TOPSIS amplifies noise when criteria tie (guard added, unproven);
+                  est_rows is a proxy; weights set a priori.
+  LLM arms        repeats mostly measure option-order sensitivity at temperature
+                  0; arm 3 has no repeat variance.
+  Scoring         failures are scored as the original, biasing counts toward ties.
+  Contamination   ap08, ap19, ap02 (all TEST split) were run in Phase 2: baseline
+                  timings seen, ap08's real pool seen. Nothing tuned on them.
+  Statistics      Wilcoxon has almost no power on a handful of non-identical pairs.
+
+
+--------------------------------------------------------------------------------
+12. WHAT REMAINS
+--------------------------------------------------------------------------------
+12.1 Decisions waiting on you
+  a. OR noise guard: keep (1.0 x IQR), change the multiplier, or disable?
+  b. Pool productivity: the generator returns "no rewrite" often. Options: leave
+     as is (honest but low-information) or change the generator prompt to ask for
+     several genuinely different strategies. If the prompt changes, regenerate
+     ALL pools with the new prompt before any arm is run, and record why.
+  c. Final provider: Groq (works now) or Ollama/Qwen2.5-Coder (CLAUDE.md's
+     primary, but the model must first be downloaded, e.g. on another network).
+     One provider must serve the whole evaluation run.
+
+12.2 Finishing the evaluation (Phase 3 follow-up)
+  1. Generate pools for all 40 queries with the chosen provider; review the
+     candidate statuses (valid / invalid reasons / duplicates).
+  2. Run the full dev set (15 queries) with the runner; read the report.
+  3. Judge the noise guard on dev by comparing arm 3 and 3-raw; decide whether the
+     tie band (5%) is sensible against the observed pass-to-pass noise.
+  4. Verify buffer-pool residency; reduce background load for timing runs.
+  5. Improve the report: per-category breakdown, confidence intervals / bootstrap
+     for effect sizes, a table restricted to contested queries.
+  6. FREEZE everything (weights, guard, tie band, prompts, pools, split), commit,
+     then run the TEST split ONCE from a clean git tree (--allow-test).
+  7. Optional robustness check: repeat with Ollama/Qwen2.5-Coder once the model
+     is available, as a separate run (never mixed with the Groq run).
+  8. Write up results with the threats list (disclose the test queries seen in
+     Phase 2).
+
+12.3 Phase 4 - Workload Advisor
+  ILP index selection with PuLP + CBC: choose a set of indexes for a workload
+  under a budget, using real index experiments. Experiments use the admin user
+  and every created index must be dropped after each experiment (also on
+  failure). Statistics must be refreshed after index changes. Needs its own
+  fairness design (what is compared, on which queries, how benefit is measured)
+  and tests (ILP known-answer tests; "indexes are always dropped" test).
+
+12.4 Phase 5 - Scale Simulator
+  M/M/c analytical model plus a SimPy discrete-event simulation, with service
+  times taken from MEASURED runtimes (from the results files). Needs validation
+  of the simulation against the M/M/c closed form, and known-answer tests.
+
+12.5 Phase 6 - Frontend
+  React + Vite + Tailwind UI for the three modules (Query Studio, Workload
+  Advisor, Scale Simulator) plus a results dashboard reading results/*.jsonl.
+  The Studio API and the Bruno collection exist; advisor and simulator
+  endpoints do not yet.
+
+12.6 Housekeeping
+  - CLAUDE.md has a stray line "go" (line 32), uncommitted - yours to keep or
+    remove. This document is also uncommitted.
+  - Decide whether prompt.md (the user's step list, tracked in git) stays.
+  - Open question for the final write-up: how to present results when most
+    queries are ties by construction.
+
+
+--------------------------------------------------------------------------------
+13. HOW TO RUN THINGS  (from the repo root; MySQL container must be up)
+--------------------------------------------------------------------------------
+  docker compose up -d                              start MySQL
+  cd backend && python -m pytest -q                 run the 186 tests
+  python scripts/check_counts.py                    30-table row-count check
+  python scripts/validate_queries.py                one run of every query
+  python scripts/generate_pools.py --provider groq --split dev [--limit N | --queries a,b]
+  python -m app.eval.runner --run-id dev-001 --provider groq --split dev [--limit N | --queries a,b]
+  python -m app.eval.report results/dev-001.jsonl   (run from backend/)
+  uvicorn app.main:app --port 8000                  API (from backend/); POST /studio/optimize
+  Test split: add --allow-test and run only from a clean, committed tree.
+
+
+--------------------------------------------------------------------------------
+14. REPOSITORY LAYOUT AND UNCOMMITTED STATE
+--------------------------------------------------------------------------------
+  CLAUDE.md                project rules (thesis, fairness rules, stack)
+  README.md                setup and usage
+  docker-compose.yml       MySQL 8.4.13, flags, volume, healthcheck
+  docker/mysql/init/       user + grant creation
+  config/                  ahp.yaml (fixed weights), run.yaml (timeouts, protocol, etc.)
+  data/                    queries.yaml, splits.yaml (frozen), expected_counts.yaml,
+                           antipatterns/ (22), queries/ (18), raw/ (gitignored)
+  candidates/              cached pools (6 so far, all Groq qwen/qwen3.8-27b)
+  results/                 dry-001.jsonl, llm_calls.jsonl
+  scripts/                 fetch/load/check/build/validate/generate_pools
+  backend/app/             api, llm, optimizer, eval  (core/advisor/simulator empty)
+  backend/tests/           186 tests in 13 files
+  bruno/                   API collection
+  docs/                    threats_to_validity.md
+  frontend/                empty placeholder
+
+  Uncommitted right now: CLAUDE.md (stray "go" line) and this file.
+================================================================================
