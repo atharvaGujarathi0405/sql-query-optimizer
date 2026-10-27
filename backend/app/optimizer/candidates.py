@@ -1,0 +1,147 @@
+"""Candidate pool: generated once per query, checked, cached to candidates/<query_id>.json.
+
+Fairness rules 2 and 3 (CLAUDE.md): arms 2 and 3 choose from the SAME cached pool,
+and every candidate has passed the correctness check before either arm sees it.
+Invalid candidates are kept in the file with their reason, never silently dropped.
+A failed generation (LLM down, unparseable output) is NOT cached: caching it would
+look like "no good rewrite exists" and silently hand every arm the original.
+"""
+import hashlib
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+
+import sqlglot
+
+from app.config import RUN_CONFIG
+from app.optimizer.analysis import detect, load_schema, parse, schema_text, tables_in
+from app.optimizer.checker import check_candidate, fetch_original
+from app.optimizer.execution import open_session
+
+POOL_DIR = Path(__file__).resolve().parents[3] / "candidates"
+MAX_CANDIDATES = RUN_CONFIG.get("candidates_per_query", 5)
+SCHEMA_VERSION = 1
+
+SYSTEM_PROMPT = """You are an expert MySQL 8.4 query optimizer. Given a SELECT query and the table definitions \
+(including indexes), propose rewrites that return EXACTLY the same result but can execute faster.
+
+Rules for every rewrite:
+- A single MySQL 8.4 SELECT statement (WITH/UNION allowed). No DDL, no DML, no new indexes.
+- Same rows as the original: same number of columns in the same order, same values, same duplicates, \
+the same NULL behaviour. If the original has an outermost ORDER BY, keep the same ordering.
+- Be careful with semantics: NOT IN vs NOT EXISTS differ when NULLs are present; UNION removes duplicates, \
+UNION ALL does not; an INNER JOIN can multiply rows.
+- Offer genuinely different strategies, not cosmetic changes. If the query is already good, return fewer \
+candidates or none.
+
+Answer with JSON only, in this shape:
+{"candidates": [{"sql": "<the rewritten query>", "rationale": "<one sentence>"}]}"""
+
+
+def pool_path(query_id: str, pool_dir: Path = POOL_DIR) -> Path:
+    if not re.fullmatch(r"[\w\-]+", query_id):
+        raise ValueError(f"bad query id {query_id!r}")
+    return pool_dir / f"{query_id}.json"
+
+
+def canonical(sql: str) -> str:
+    return parse(sql).sql(dialect="mysql")
+
+
+def build_messages(sql: str, dataset: str, ddl: str, findings: list) -> list[dict]:
+    hints = "\n".join(f"- {f.pattern}: {f.detail}" for f in findings) or "- (none detected)"
+    user = (f"Database: {dataset}\n\nTable definitions:\n{ddl}\n\nOriginal query:\n{sql.strip()}\n\n"
+            f"Static-analysis hints (heuristic, may be wrong):\n{hints}\n\n"
+            f"Return up to {MAX_CANDIDATES} candidates as JSON.")
+    return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
+
+
+def parse_candidates(text: str) -> list[dict]:
+    """Tolerant extraction of [{'sql','rationale'}] from an LLM answer; raises ValueError if none."""
+    t = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip(), flags=re.I)
+    try:
+        data = json.loads(t)
+    except json.JSONDecodeError:
+        m = re.search(r"\{.*\}|\[.*\]", t, re.S)
+        if not m:
+            raise ValueError("no JSON found in the answer")
+        data = json.loads(m.group(0))
+    items = data.get("candidates") if isinstance(data, dict) else data
+    if not isinstance(items, list):
+        raise ValueError("JSON has no 'candidates' list")
+    out = []
+    for it in items:
+        sql = it if isinstance(it, str) else (it or {}).get("sql")
+        if isinstance(sql, str) and sql.strip():
+            out.append({"sql": sql.strip().rstrip(";").strip(),
+                        "rationale": "" if isinstance(it, str) else str(it.get("rationale", ""))[:300]})
+    if not out:
+        raise ValueError("no usable candidate in the answer")
+    return out
+
+
+def load_pool(query_id: str, pool_dir: Path = POOL_DIR) -> dict | None:
+    p = pool_path(query_id, pool_dir)
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+
+
+def valid_candidates(pool: dict) -> list[dict]:
+    return [c for c in pool["candidates"] if c["status"] == "valid"]
+
+
+def generate_pool(conn, client, query_id: str, dataset: str, sql: str, *, provider: str | None = None,
+                  pool_dir: Path = POOL_DIR, force: bool = False) -> dict:
+    """Return the cached pool, or generate + check + cache one. The returned dict has `cached` and,
+    on failure, `error` with no file written."""
+    existing = None if force else load_pool(query_id, pool_dir)
+    if existing:
+        existing["cached"] = True
+        return existing
+
+    timeout_s = RUN_CONFIG["query_timeout_s"]
+    cur = open_session(conn, dataset, timeout_s)
+    findings = detect(sql, load_schema(conn, dataset))
+    messages = build_messages(sql, dataset, schema_text(conn, dataset, tables_in(sql)), findings)
+    prompt_hash = hashlib.sha256(json.dumps(messages, sort_keys=True).encode()).hexdigest()
+    resp = client.chat(messages, provider=provider, json_mode=True)
+    generator = {"provider": resp.provider, "model": resp.model, "temperature": client.cfg.temperature,
+                 "seed": client.cfg.seed, "prompt_sha256": prompt_hash,
+                 "detected_patterns": sorted({f.pattern for f in findings}),
+                 "llm_attempts": [a.__dict__ for a in resp.attempts]}
+    fail = {"query_id": query_id, "cached": False, "generator": generator, "candidates": []}
+    if resp.text is None:
+        return {**fail, "error": f"LLM unavailable: {resp.error}"}
+    try:
+        raw = parse_candidates(resp.text)
+    except ValueError as e:
+        return {**fail, "error": f"unparseable LLM answer: {e}", "raw_answer": resp.text[:2000]}
+
+    orig = fetch_original(cur, sql)
+    seen = {canonical(sql): "original"}
+    cands = []
+    for i, c in enumerate(raw[:MAX_CANDIDATES], 1):
+        cid = f"c{i}"
+        entry = {"id": cid, "sql": c["sql"], "rationale": c["rationale"]}
+        try:
+            key = canonical(c["sql"])
+        except sqlglot.errors.SqlglotError:
+            key = None
+        if key in seen:
+            entry.update(status="duplicate", duplicate_of=seen[key], check=None)
+        else:
+            if key:
+                seen[key] = cid
+            chk = check_candidate(cur, orig, c["sql"])
+            entry.update(status="valid" if chk.valid else "invalid", check=chk.to_dict())
+        cands.append(entry)
+    pool = {"schema_version": SCHEMA_VERSION, "query_id": query_id, "dataset": dataset, "original_sql": sql,
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "generator": generator,
+            "original_check": {"ok": orig.rows is not None, "rows": None if orig.rows is None else len(orig.rows),
+                               "error": orig.error},
+            "n_proposed": len(raw), "n_truncated": max(0, len(raw) - MAX_CANDIDATES),  # beyond the cap: counted, not hidden
+            "candidates": cands}
+    p = pool_path(query_id, pool_dir)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(pool, indent=2, ensure_ascii=False), encoding="utf-8")
+    return {**pool, "cached": False}

@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from mysql.connector import Error
 
+from app.api.studio import router as studio_router
 from app.db import get_readonly_conn
 
 app = FastAPI(title="sql-query-optimizer")
+app.include_router(studio_router)
 
 
 @app.get("/health")

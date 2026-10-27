@@ -1,0 +1,29 @@
+# AHP judgments for the OR engine's criteria. FIXED BEFORE ANY EVALUATION RUN
+# (CLAUDE.md rule 5): never tune these on the evaluation queries. Written
+# 2026-10-27, before any candidate was measured, from a priori reasoning only.
+#
+# All four criteria are costs (lower is better). Each is measured per
+# candidate by app/optimizer/metrics.py and shown identically to arm 2b.
+#
+#   runtime_ms     median wall-clock of the timed runs (what users feel; ground-truth-like)
+#   rows_examined  rows MySQL actually read (measured work; stable across noisy runs)
+#   est_cost       optimizer's EXPLAIN query_cost (a model output; correlated with the baseline's own choice)
+#   est_rows       optimizer's estimated rows examined (a model output; weakest, coarsest)
+#
+# Judgment: runtime matters most; measured work next; the optimizer's own
+# estimates least, because the baseline arm already trusts them and an engine
+# that merely repeats them adds nothing. Scale is Saaty 1-9.
+# The consistency ratio is computed on load and must be < 0.1 (tests assert it).
+criteria: [runtime_ms, rows_examined, est_cost, est_rows]
+direction:
+  runtime_ms: cost
+  rows_examined: cost
+  est_cost: cost
+  est_rows: cost
+pairwise:        # [a, b, v] = "a is v times as important as b"
+  - [runtime_ms, rows_examined, 3]
+  - [runtime_ms, est_cost, 5]
+  - [runtime_ms, est_rows, 7]
+  - [rows_examined, est_cost, 2]
+  - [rows_examined, est_rows, 3]
+  - [est_cost, est_rows, 2]

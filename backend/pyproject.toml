@@ -12,10 +12,11 @@ dependencies = [
     "simpy",
     "numpy",
     "pyyaml",
+    "httpx",  # HTTP client for Ollama/Groq (was dev-only, for FastAPI TestClient)
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx"]
+dev = ["pytest"]
 
 [build-system]
 requires = ["setuptools>=68"]

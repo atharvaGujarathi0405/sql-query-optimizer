@@ -1,0 +1,26 @@
+meta {
+  name: Studio optimize (registry query)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/studio/optimize
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "query_id": "ap08_arithmetic_on_indexed_column"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Needs a running LLM provider (Ollama, or Groq as fallback), or the response is {"error": "LLM unavailable ...", "winner": null}.
+  Add "provider": "ollama" to pin one provider. Ad-hoc SQL: {"dataset": "sakila", "sql": "SELECT ..."}.
+}

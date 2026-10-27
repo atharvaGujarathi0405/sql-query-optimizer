@@ -42,3 +42,27 @@ READONLY_DB = _db_config("OPTIMIZER_READONLY_USER", "OPTIMIZER_READONLY_PASSWORD
 # config/run.yaml holds execution settings shared by all arms (see the file for rationale).
 RUN_CONFIG = yaml.safe_load((Path(__file__).resolve().parents[2] / "config" / "run.yaml").read_text())
 QUERY_TIMEOUT_S: int = RUN_CONFIG["query_timeout_s"]
+
+
+@dataclass(frozen=True)
+class LLMConfig:
+    ollama_host: str
+    ollama_model: str
+    groq_api_key: str | None
+    groq_model: str
+    temperature: float
+    seed: int
+    timeout_s: float
+
+
+def llm_config() -> LLMConfig:
+    """Read at call time so a missing GROQ_API_KEY (optional fallback) never breaks import."""
+    return LLMConfig(
+        ollama_host=os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/"),
+        ollama_model=os.environ.get("OLLAMA_MODEL", "qwen2.5-coder:7b"),
+        groq_api_key=os.environ.get("GROQ_API_KEY") or None,
+        groq_model=os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        temperature=float(os.environ.get("LLM_TEMPERATURE", "0")),
+        seed=int(os.environ.get("LLM_SEED", "42")),
+        timeout_s=float(os.environ.get("LLM_TIMEOUT_S", "180")),
+    )

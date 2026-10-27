@@ -16,3 +16,11 @@
 # (right-censored), not as 120 s. After a candidate's first timeout the runner
 # skips its remaining repeats (outcome recorded once per candidate).
 query_timeout_s: 120
+
+# Timing protocol (CLAUDE.md rule 7), identical for every query and every arm:
+# warmup runs are discarded, then timed runs are summarised as median and IQR.
+warmup_runs: 2
+timed_runs: 5
+
+# Candidate pool size requested from the generator (the cap on candidates kept per query).
+candidates_per_query: 5
