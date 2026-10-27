@@ -61,7 +61,7 @@ def llm_config() -> LLMConfig:
         ollama_host=os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/"),
         ollama_model=os.environ.get("OLLAMA_MODEL", "qwen2.5-coder:7b"),
         groq_api_key=os.environ.get("GROQ_API_KEY") or None,
-        groq_model=os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        groq_model=os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b"),
         temperature=float(os.environ.get("LLM_TEMPERATURE", "0")),
         seed=int(os.environ.get("LLM_SEED", "42")),
         timeout_s=float(os.environ.get("LLM_TIMEOUT_S", "180")),

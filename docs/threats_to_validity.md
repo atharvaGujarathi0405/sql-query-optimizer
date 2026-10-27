@@ -96,8 +96,8 @@ the final list.
     (`optimizer/analysis.py`, derived from SQL text and schema only, never from
     the registry's labels). Duplicates of the original are recorded, not scored.
     Candidates beyond the cap are counted (`n_truncated`), not hidden.
-18. **Groq fallback is a different model** (default `llama-3.3-70b-versatile`,
-    not Qwen2.5-Coder). Pools or arm-2 answers produced by the fallback are
+18. **Groq fallback is a different model** (default `qwen/qwen3.8-27b`,
+    not Qwen2.5-Coder; `llama-3.3-70b-versatile` was tried first and no longer exists on Groq). Pools or arm-2 answers produced by the fallback are
     not comparable with Ollama ones; each pool records its provider, and an
     evaluation run must pin one (`provider=` disables the fallback).
 19. **Correctness checker limits.** (a) Floats compare exactly (the datasets use

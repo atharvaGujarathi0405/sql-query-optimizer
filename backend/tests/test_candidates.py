@@ -71,6 +71,17 @@ def test_pool_is_generated_once_then_served_from_cache(conn, tmp_path, fake_llm)
     assert llm.calls == 2
 
 
+def test_pinned_provider_is_never_served_another_providers_pool(conn, tmp_path, fake_llm):
+    generate_pool(conn, fake_llm([GOOD], provider="groq"), QID, DS, ORIG, pool_dir=tmp_path)
+    llm = fake_llm([GOOD], provider="ollama")
+    r = generate_pool(conn, llm, QID, DS, ORIG, provider="ollama", pool_dir=tmp_path)
+    assert "'groq'" in r["error"] and "'ollama'" in r["error"] and llm.calls == 0
+    assert load_pool(QID, tmp_path)["generator"]["provider"] == "groq"  # untouched
+    # same provider is fine, and so is an unpinned request (development use)
+    assert generate_pool(conn, llm, QID, DS, ORIG, provider="groq", pool_dir=tmp_path)["cached"] is True
+    assert generate_pool(conn, llm, QID, DS, ORIG, pool_dir=tmp_path)["cached"] is True
+
+
 def test_llm_outage_is_reported_and_not_cached(conn, tmp_path, fake_llm):
     r = generate_pool(conn, fake_llm(fail=True), QID, DS, ORIG, pool_dir=tmp_path)
     assert "LLM unavailable" in r["error"] and r["generator"]["llm_attempts"][0]["ok"] is False
