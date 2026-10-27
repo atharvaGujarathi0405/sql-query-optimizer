@@ -111,8 +111,10 @@ def test_runner_writes_every_query_every_repeat_and_every_failure(pools, fake_ll
 
     for qid in (Q_GOOD, Q_ALSO):
         arms = [r for r in recs if r["type"] == "arm" and r["query_id"] == qid]
-        by = {a: [r for r in arms if r["arm"] == a] for a in ("1", "2a", "2b", "3", "3-raw")}
-        assert [len(by[a]) for a in ("1", "2a", "2b", "3", "3-raw")] == [1, 2, 2, 1, 1]
+        by = {a: [r for r in arms if r["arm"] == a] for a in ("1", "2a", "2b", "3", "3-measured", "3-raw")}
+        assert [len(by[a]) for a in ("1", "2a", "2b", "3", "3-measured", "3-raw")] == [1, 2, 2, 1, 1, 1]
+        assert by["3-measured"][0]["criteria"] == ["runtime_ms", "rows_examined"]
+        assert by["3"][0]["criteria"] == ["runtime_ms", "rows_examined", "est_cost", "est_rows"]
         phases = {(r["phase"], r["alt_id"]) for r in recs if r["type"] == "measurement" and r["query_id"] == qid}
         assert {("selection", "original"), ("evaluation", "original"), ("selection", "c1"), ("evaluation", "c1")} <= phases
         assert all(r["prompt_sha256"] and r["llm_provider"] == "ollama" for r in by["2a"] + by["2b"])
@@ -173,7 +175,7 @@ def test_report_covers_every_section_and_counts_failures(pools, fake_llm):
     path = run("t7", "ollama", qs, client=fake_llm(text='{"choice": "B"}'), split="all", pool_dir=pool_dir, out_dir=out, repeats=2)
     text = R.report(path)
     for section in ("PER-ARM RESULTS", "LLM VARIANCE", "PAIRED COMPARISONS", "FAILURES", "MySQL 8.4.13", "buffer_pool=3.0 GiB",
-                    "3  OR engine", "2a LLM", "pool_missing", "Wilcoxon"):
+                    "3  OR engine", "3m OR, measured only", "2a LLM", "pool_missing", "Wilcoxon"):
         assert section in text, section
     assert "complete=True" in text
 

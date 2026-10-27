@@ -194,3 +194,15 @@ the final list.
     `ap15`, `ap17`, scored as the original). The arms that do not call the LLM are unaffected.
     The client now retries dropped connections (5/15/45 s) and the runner labels such failures
     `llm_unreachable` instead of `llm_failure`. dev-003 is the first clean dev run.
+35. **Declared secondary arm `3-measured` (decision: option C, 2026-10-27).** The primary arm 3 is
+    unchanged (four criteria, a-priori weights). `3-measured` is the same engine on runtime and
+    rows examined only (weights 0.75 / 0.25, the same judgments restricted, CR 0), with the same
+    noise guard. It is declared in `config/ahp.yaml` after the clean dev run `dev-003` and before any
+    test run. **Its design was informed by dev data** (two queries; threat 33), so it is a
+    post-dev arm, not an a-priori one; it is reported next to arm 3, never instead of it. Caveats:
+    (a) three OR variants (`3`, `3-measured`, `3-raw`) are compared against two LLM arms with no
+    multiplicity correction, so the paired p-values are descriptive; (b) `3-measured` uses two
+    columns while 2b sees four, so 3 vs 2b stays the like-for-like comparison and 3-measured vs 2b
+    is not; (c) if `3-measured` and a runtime-only rule make identical picks on test, the AHP/TOPSIS
+    machinery contributes nothing beyond "pick the fastest measured candidate", and that is the
+    finding to report.

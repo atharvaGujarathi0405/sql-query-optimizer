@@ -89,3 +89,26 @@ def test_topsis_constant_column_is_ignored():
     with_const = topsis([[1, 7], [2, 7]], [0.5, 0.5], [False, False])
     only_first = topsis([[1], [2]], [0.5], [False])
     np.testing.assert_allclose(with_const, only_first, atol=1e-12)
+
+
+def test_measured_variant_reuses_the_same_judgments_and_gives_exact_weights():
+    # Only runtime:rows_examined = 3 survives: [[1, 3], [1/3, 1]] has principal eigenvector (3, 1)/4 exactly.
+    criteria, benefit, res = load_ahp(AHP_YAML, "measured")
+    assert criteria == ["runtime_ms", "rows_examined"] and benefit == [False, False]
+    np.testing.assert_allclose(res.weights, [0.75, 0.25], atol=1e-12)
+    assert res.cr == 0.0
+
+
+def test_primary_arm_is_unchanged_by_the_variant_declaration():
+    criteria, _, res = load_ahp(AHP_YAML)
+    assert criteria == ["runtime_ms", "rows_examined", "est_cost", "est_rows"]
+    np.testing.assert_allclose(res.weights, [0.587166, 0.217876, 0.122786, 0.072172], atol=1e-6)
+
+
+def test_unknown_variant_or_criterion_is_an_error(tmp_path):
+    with pytest.raises(KeyError):
+        load_ahp(AHP_YAML, "nope")
+    bad = tmp_path / "ahp.yaml"
+    bad.write_text("criteria: [a, b]\ndirection: {a: cost, b: cost}\npairwise: [[a, b, 2]]\nvariants: {v: [a, zzz]}\n")
+    with pytest.raises(ValueError, match="unknown criteria"):
+        load_ahp(bad, "v")

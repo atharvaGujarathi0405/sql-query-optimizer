@@ -24,14 +24,15 @@ def _field(criterion: str) -> str:
     return {"runtime_ms": "runtime_ms_median"}.get(criterion, criterion)
 
 
-def or_decision(alts: list[dict], noise_k: float | None = None) -> dict:
+def or_decision(alts: list[dict], noise_k: float | None = None, variant: str | None = None) -> dict:
     """alts: [{'id', 'metrics': Metrics.to_dict()}, ...] with the ORIGINAL FIRST (it wins ties).
 
     Only alternatives that ran to completion with all criteria present are ranked; the rest get
     `excluded_reason`. -> dict with ranking, closeness, winner (guarded), winner_raw, guard.
+    `variant` selects a declared criteria subset from config/ahp.yaml (e.g. "measured"); None = all criteria.
     """
     k = NOISE_K if noise_k is None else noise_k
-    criteria, benefit, ahp_res = load_ahp(AHP_PATH)  # raises if CR >= 0.1
+    criteria, benefit, ahp_res = load_ahp(AHP_PATH, variant)  # raises if CR >= 0.1
     rankable = [a for a in alts if a["metrics"]["outcome"] == "ok"
                 and all(a["metrics"].get(_field(c)) is not None for c in criteria)]
     ids = {a["id"] for a in rankable}

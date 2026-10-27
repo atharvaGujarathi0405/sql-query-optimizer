@@ -18,9 +18,9 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 
-ARMS = ["1", "2a", "2b", "3", "3-raw"]
-NAMES = {"1": "1  baseline", "2a": "2a LLM (SQL+schema)", "2b": "2b LLM (+metrics)", "3": "3  OR engine", "3-raw": "3-raw OR, no guard"}
-PAIRS = [("3", "2b"), ("3", "2a"), ("2b", "2a"), ("3-raw", "2b")]
+ARMS = ["1", "2a", "2b", "3", "3-measured", "3-raw"]
+NAMES = {"1": "1  baseline", "2a": "2a LLM (SQL+schema)", "2b": "2b LLM (+metrics)", "3": "3  OR engine", "3-measured": "3m OR, measured only", "3-raw": "3-raw OR, no guard"}
+PAIRS = [("3", "2b"), ("3", "2a"), ("2b", "2a"), ("3-measured", "2b"), ("3-measured", "3"), ("3-raw", "2b")]
 LLM_ARMS = ("2a", "2b")
 
 
@@ -102,12 +102,12 @@ def _fmt_arm(units: list[dict]) -> str:
 def per_query_section(data: dict, sc: list[dict], contested: list[dict]) -> list[str]:
     """One row per contested query: what each arm picked, mean ratio to baseline (x0.10 = 10x faster), outcome."""
     L = ["CONTESTED QUERIES (pool has >= 1 valid candidate); ratio = pick time / baseline time, lower is better",
-         f"{'query':32}{'valid':>6}{'base ms':>9}   {'3 (OR)':26}{'3-raw':22}{'2b':22}2a"]
+         f"{'query':32}{'valid':>6}{'base ms':>9}   {'3 (OR)':24}{'3-measured':24}{'3-raw':22}{'2b':22}2a"]
     for q in contested:
         qid = q["query_id"]
         base = data["ev"].get((qid, "original"))
-        cells = {a: _fmt_arm([s for s in sc if s["query_id"] == qid and s["arm"] == a]) for a in ("3", "3-raw", "2b", "2a")}
-        L.append(f"{qid[:31]:32}{q['n_valid']:>6}{base['runtime_ms_median']:>9.1f}   {cells['3']:26}{cells['3-raw']:22}{cells['2b']:22}{cells['2a']}")
+        cells = {a: _fmt_arm([s for s in sc if s["query_id"] == qid and s["arm"] == a]) for a in ("3", "3-measured", "3-raw", "2b", "2a")}
+        L.append(f"{qid[:31]:32}{q['n_valid']:>6}{base['runtime_ms_median']:>9.1f}   {cells['3']:24}{cells['3-measured']:24}{cells['3-raw']:22}{cells['2b']:22}{cells['2a']}")
     L.append("")
     return L
 
@@ -143,7 +143,7 @@ def report(path: Path) -> str:
         L.append(f"{NAMES[arm]:22}{len(u):>6}{(np.median(ms) if ms else float('nan')):>11.2f}{(np.median(rt) if rt else float('nan')):>14.4f}"
                  f"{c['win']:>5}{c['tie']:>5}{c['loss']:>6}{c['timeout']:>9}{c['error'] + c['baseline_failed']:>7}"
                  f"{sum(1 for s in u if s['fallback']):>10}")
-    L.append("  units = queries for arms 1/3/3-raw, query x repeat for 2a/2b. 'fallback' = failure scored as the original.")
+    L.append("  units = queries for arms 1/3/3-measured/3-raw, query x repeat for 2a/2b. 'fallback' = failure scored as the original.")
     L.append("")
 
     L += per_query_section(data, sc, contested)

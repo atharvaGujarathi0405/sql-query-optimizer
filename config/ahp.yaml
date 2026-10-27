@@ -27,3 +27,13 @@ pairwise:        # [a, b, v] = "a is v times as important as b"
   - [rows_examined, est_cost, 2]
   - [rows_examined, est_rows, 3]
   - [est_cost, est_rows, 2]
+
+# Declared secondary arm "3-measured" (written 2026-10-27, AFTER the clean dev run dev-003 and BEFORE any test run).
+# The same judgments above, restricted to the two criteria that are MEASURED on this server: with only
+# runtime:rows_examined = 3 left, the weights are 0.75 / 0.25 (CR = 0). Motivation: on dev-003 the two EXPLAIN
+# estimate criteria outvoted runtime on queries where the optimizer misprices derived-table plans
+# (docs/threats_to_validity.md items 32-33). Nothing is re-tuned; the primary arm 3 uses all four criteria,
+# unchanged. Both are reported. The choice of THIS variant was informed by dev data, so it is a declared
+# post-dev secondary arm, not an a-priori one.
+variants:
+  measured: [runtime_ms, rows_examined]

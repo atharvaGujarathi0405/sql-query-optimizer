@@ -563,3 +563,21 @@ Full text: docs/threats_to_validity.md, items 1-30. Headlines:
        avoids picking the winner after seeing dev, and reports both honestly.
   Also still open: pool productivity (9 of 15 dev queries have no choice) and the
   final provider (Groq vs Ollama). Then: freeze everything, commit, run test ONCE.
+
+
+--------------------------------------------------------------------------------
+16. DECISION RECORDED: OPTION C (declared secondary arm "3-measured")
+--------------------------------------------------------------------------------
+  Chosen by the author on 2026-10-27 after reading section 15. Implemented:
+    config/ahp.yaml   `variants: {measured: [runtime_ms, rows_examined]}` with the
+                      declaration and its motivation (weights 0.75 / 0.25, CR 0)
+    mcdm.load_ahp(path, variant)     restricts to the kept criteria; no new judgments
+    decision.or_decision(alts, variant="measured")
+    runner            records arm "3-measured" (guarded, same noise guard) next to 3 / 3-raw
+    report            "3m OR, measured only" column and rows; pairs 3m vs 2b and 3m vs 3
+  Arm 3 (primary, four criteria, a-priori weights) is UNCHANGED. Tests: 197 passing,
+  including regression tables taken from dev-003 (ap18, tpch_q18, ap17).
+  Threats item 35 lists the caveats (post-dev design, no multiplicity correction,
+  table asymmetry vs 2b, and the "adds nothing beyond runtime argmin" outcome).
+  NEXT: a clean dev run with the new arm recorded natively (dev-004), then the open
+  items in 15.5 (pool productivity, final provider), then freeze and the single test run.

@@ -2,7 +2,8 @@
 
 Arms (CLAUDE.md): 1 = MySQL on the original query; 2a = LLM picks from the pool seeing SQL + schema;
 2b = same plus the metric table; 3 = OR engine (TOPSIS + noise guard); 3-raw = TOPSIS without the guard
-(same data, logged for the dev-set ablation only).
+(same data, dev-set ablation only); 3-measured = declared secondary arm, the same engine on the two measured
+criteria only (config/ahp.yaml `variants`).
 
 Design (see docs/threats_to_validity.md):
 - Arms 2 and 3 choose from the SAME cached pool (original + correctness-verified candidates).
@@ -154,12 +155,12 @@ def _run_query(conn, w: Writer, client, provider: str, model: str, q: dict, repe
 
     arm("1", "original", by="baseline")
 
-    d = or_decision(sel_alts)
-    for name, pick in (("3", d["winner"]), ("3-raw", d["winner_raw"])):
+    d, dm = or_decision(sel_alts), or_decision(sel_alts, variant="measured")
+    for name, pick, dec in (("3", d["winner"], d), ("3-raw", d["winner_raw"], d), ("3-measured", dm["winner"], dm)):
         if pick is None:
-            _fail(w, qid, "or_engine", "no_rankable_alternative", f"excluded: {d['excluded']}", arm=name)
+            _fail(w, qid, "or_engine", "no_rankable_alternative", f"excluded: {dec['excluded']}", arm=name)
         arm(name, pick or "original", by="or_engine", failure=None if pick else "no_rankable_alternative",
-            closeness=d["closeness"], guard=d["guard"], winner_raw=d["winner_raw"])
+            closeness=dec["closeness"], guard=dec["guard"], winner_raw=dec["winner_raw"], criteria=dec["criteria"])
 
     ddl = schema_text(conn, dataset, tables_in(sql))
     for variant in ARMS_LLM:

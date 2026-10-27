@@ -78,3 +78,33 @@ def test_weights_come_from_the_fixed_config_with_cr_below_limit():
     d = or_decision([ORIG, BIG_WIN])
     assert d["criteria"] == ["runtime_ms", "rows_examined", "est_cost", "est_rows"]
     assert abs(sum(d["weights"]) - 1) < 1e-5 and d["ahp"]["consistency_ratio"] < 0.1
+
+
+# ---- real selection tables from dev-003 (the evidence behind the declared "measured" variant) --------
+def real(id_, ms, iqr, rows, cost, est):
+    return alt(id_, ms, iqr, rows=rows, cost=cost, est=est)
+
+
+AP18 = [real("original", 576, 26, 1_800_003, 15_304, 148_488), real("c1", 1424, 54, 3_199_995, 673_229, 1_489_214),
+        real("c2", 618, 39, 1_800_003, 15_304, 148_488), real("c3", 404, 18, 1_822_075, 536_529, 1_637_696)]
+Q18 = [real("original", 2780, 10, 9_002_190, 1_649_814, 7_425_664), real("c1", 2716, 77, 9_002_190, 1_649_814, 7_425_664),
+       real("c2", 6412, 23, 9_002_188, 1_649_814, 1_489_222), real("c3", 2192, 72, 6_002_302, 8_716_321, 11_872_896)]
+AP17 = [real("original", 478, 7, 1_728_646, 1_641_217, 1_489_213), real("c1", 571, 14, 1_728_646, 317_439, 1_489_213)]
+
+
+def test_primary_arm_keeps_the_original_on_ap18_because_estimates_outvote_runtime():
+    # c3 is 30% faster but EXPLAIN prices it 35x higher: the four-criteria engine stays put (documented weakness)
+    assert or_decision(AP18)["winner"] == "original"
+
+
+def test_measured_variant_finds_the_faster_candidate_on_ap18_and_q18():
+    d = or_decision(AP18, variant="measured")
+    assert d["criteria"] == ["runtime_ms", "rows_examined"] and d["weights"] == [0.75, 0.25]
+    assert d["winner"] == "c3"
+    assert or_decision(Q18, variant="measured")["winner"] == "c3"
+    assert or_decision(Q18)["winner"] != "c3"  # the primary arm picks c1 here (no gain)
+
+
+def test_noise_guard_still_protects_the_measured_variant():
+    # ap17: c1 is SLOWER; with the guard the original stays, whichever criteria are used
+    assert or_decision(AP17, variant="measured")["winner"] == "original"

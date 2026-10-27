@@ -41,15 +41,25 @@ def ahp(matrix) -> AHPResult:
     return AHPResult(w, lam, ci, cr)
 
 
-def load_ahp(path: Path) -> tuple[list[str], list[bool], AHPResult]:
-    """Read config/ahp.yaml -> (criteria, benefit flags, AHP result). Raises if CR >= 0.1."""
+def load_ahp(path: Path, variant: str | None = None) -> tuple[list[str], list[bool], AHPResult]:
+    """Read config/ahp.yaml -> (criteria, benefit flags, AHP result). Raises if CR >= 0.1.
+
+    `variant` (a key of `variants:` in the file) restricts the criteria; only the judgments between the
+    kept criteria are used, and the weights are recomputed from them (no new judgments)."""
     cfg = yaml.safe_load(Path(path).read_text())
     criteria = cfg["criteria"]
+    if variant is not None:
+        keep = cfg["variants"][variant]
+        unknown = set(keep) - set(criteria)
+        if unknown:
+            raise ValueError(f"variant {variant!r} names unknown criteria {sorted(unknown)}")
+        criteria = [c for c in criteria if c in keep]
     idx = {c: i for i, c in enumerate(criteria)}
     A = np.ones((len(criteria), len(criteria)))
     for a, b, v in cfg["pairwise"]:  # "a is v times as important as b"
-        A[idx[a], idx[b]] = v
-        A[idx[b], idx[a]] = 1.0 / v
+        if a in idx and b in idx:
+            A[idx[a], idx[b]] = v
+            A[idx[b], idx[a]] = 1.0 / v
     res = ahp(A)
     if res.cr >= CR_LIMIT:
         raise ValueError(f"AHP judgments in {path} are inconsistent: CR={res.cr:.4f} >= {CR_LIMIT}")
