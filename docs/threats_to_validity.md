@@ -31,10 +31,11 @@ the final list.
 
 ## Environment and measurement
 
-6. **Buffer pool vs data size.** `innodb_buffer_pool_size` is 2 GiB. The three
-   datasets measure 1.71 GiB (TPC-H 1.56 GiB) per `information_schema`, a
-   cached estimate. They should sit in memory after warm-up, with about 14%
-   headroom, but residency has not been verified (check
+6. **Buffer pool vs data size.** `innodb_buffer_pool_size` is 3 GiB (raised from
+   2 GiB on 2026-10-27, before any evaluation run, because the data left only
+   ~14% headroom). The three datasets measure 1.71 GiB (TPC-H 1.56 GiB) per
+   `information_schema`, a cached estimate, i.e. ~57% of the pool. They should
+   sit in memory after warm-up, but residency has not been verified (check
    `Innodb_buffer_pool_reads` stays flat across timed runs). If it holds,
    timings reflect CPU and plan quality, not disk I/O, which is **not**
    representative of production systems with data larger than memory.
