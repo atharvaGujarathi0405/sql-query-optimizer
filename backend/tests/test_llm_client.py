@@ -136,3 +136,23 @@ def test_a_persistent_outage_is_a_logged_failure_after_the_last_try():
 
     r = LLMClient(CFG, transport=httpx.MockTransport(handler), sleep=sleeps.append).chat(MSG, provider="ollama")
     assert r.text is None and "ConnectError" in r.error and sleeps == [5.0, 15.0, 45.0]
+
+
+def test_a_long_retry_after_is_honoured_not_cut_to_60_seconds():
+    calls, sleeps = [], []
+
+    def handler(request):
+        calls.append(1)
+        if len(calls) == 1:
+            return httpx.Response(429, headers={"retry-after": "200"})
+        return httpx.Response(200, json={"message": {"content": "ok after the full wait"}})
+
+    r = LLMClient(CFG, transport=httpx.MockTransport(handler), sleep=sleeps.append).chat(MSG, provider="ollama")
+    assert r.text == "ok after the full wait" and sleeps == [200.0]
+
+
+def test_an_absurd_retry_after_is_capped_at_fifteen_minutes():
+    sleeps = []
+    LLMClient(CFG, transport=httpx.MockTransport(lambda req: httpx.Response(429, headers={"retry-after": "86400"})),
+              sleep=sleeps.append).chat(MSG, provider="ollama")
+    assert sleeps == [900.0, 900.0, 900.0]

@@ -219,3 +219,42 @@
 {"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 13.981, "error": ""}
 {"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 14.89, "error": ""}
 {"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 15.623, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.936, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.351, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.361, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.409, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.396, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.42, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.41, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.408, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.907, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 8.906, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.32, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.622, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.687, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.43, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 7.782, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.407, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.789, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.487, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.786, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.604, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 2.07, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.502, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.938, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.502, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.51, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.408, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 3.583, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 5.937, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.71, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 4.607, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 1.038, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.409, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.436, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.483, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 0.511, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 182.179, "error": "HTTPStatusError: Client error '429 Too Many Requests' for url 'https://api.groq.com/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": true, "latency_s": 66.473, "error": ""}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 182.125, "error": "HTTPStatusError: Client error '429 Too Many Requests' for url 'https://api.groq.com/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"}
+{"provider": "groq", "model": "qwen/qwen3.8-27b", "ok": false, "latency_s": 182.263, "error": "HTTPStatusError: Client error '429 Too Many Requests' for url 'https://api.groq.com/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"}

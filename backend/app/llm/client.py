@@ -107,7 +107,10 @@ class LLMClient:
                 break
             if attempt < tries - 1:
                 wait = r.headers.get("retry-after")
-                self._sleep(min(float(wait) if wait and wait.replace(".", "", 1).isdigit() else 2.0 * 2**attempt, 60))
+                given = float(wait) if wait and wait.replace(".", "", 1).isdigit() else None
+                # The server's own Retry-After is honoured (capped at 15 min). An earlier cap of 60 s made the
+                # client retry too early, hit 429 again and give up (dev-004: ~182 s lost per failed call).
+                self._sleep(min(given, 900.0) if given is not None else min(2.0 * 2**attempt, 60.0))
         r.raise_for_status()
         return r
 

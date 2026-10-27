@@ -206,3 +206,11 @@ the final list.
     is not; (c) if `3-measured` and a runtime-only rule make identical picks on test, the AHP/TOPSIS
     machinery contributes nothing beyond "pick the fastest measured candidate", and that is the
     finding to report.
+36. **Provider rate limits shape the run.** Groq's free tier gives this model 8,000 tokens per minute
+    and 1,000 requests per day. The model reasons at length (calls of 60+ s), so a burst of arm-2
+    calls can exhaust the per-minute budget and return 429. dev-004 was aborted for this: the client
+    capped its wait at 60 s although Groq asked for longer, so calls were retried too early and
+    failed after ~182 s each. The client now honours Retry-After (cap 15 min). A call that still
+    fails is logged as a failure and scored as the original; a run with such failures in the LLM arms
+    should be repeated rather than reported (as with the outage in dev-002). Run time therefore
+    depends on the provider's limits, and the daily cap bounds how many full runs fit in a day.
