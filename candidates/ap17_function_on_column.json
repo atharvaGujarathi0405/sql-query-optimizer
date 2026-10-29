@@ -3,10 +3,10 @@
   "query_id": "ap17_function_on_column",
   "dataset": "tpch",
   "original_sql": "SELECT o_orderpriority, COUNT(*) AS n\nFROM orders\nWHERE YEAR(o_orderdate) = 1995\nGROUP BY o_orderpriority\nORDER BY o_orderpriority",
-  "created_at": "2026-10-27T07:10:11+00:00",
+  "created_at": "2026-10-29T14:57:02+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "d3cdc51b125527127870e0cb20655085867da780ce0df39e695b32bcdf0e0286",
@@ -15,10 +15,10 @@
     ],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 0.445,
+        "latency_s": 132.725,
         "error": ""
       }
     ]
@@ -28,13 +28,69 @@
     "rows": 5,
     "error": ""
   },
-  "n_proposed": 1,
+  "n_proposed": 5,
   "n_truncated": 0,
   "candidates": [
     {
       "id": "c1",
+      "sql": "SELECT o_orderpriority, COUNT(*) AS n FROM orders WHERE o_orderdate BETWEEN '1995-01-01' AND '1995-12-31' GROUP BY o_orderpriority ORDER BY o_orderpriority",
+      "rationale": "Using BETWEEN instead of YEAR function can potentially utilize an index on o_orderdate if available.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c2",
       "sql": "SELECT o_orderpriority, COUNT(*) AS n FROM orders WHERE o_orderdate >= '1995-01-01' AND o_orderdate < '1996-01-01' GROUP BY o_orderpriority ORDER BY o_orderpriority",
-      "rationale": "Replaces the non-sargable YEAR() function with a range predicate on o_orderdate, allowing the optimizer to use an index on o_orderdate if one exists, or at least perform a more efficient range scan.",
+      "rationale": "Using date range comparison can also utilize an index on o_orderdate if available.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT o_orderpriority, COUNT(*) AS n FROM orders WHERE o_orderdate LIKE '1995%' GROUP BY o_orderpriority ORDER BY o_orderpriority",
+      "rationale": "Using LIKE with a date pattern can sometimes be optimized by the query optimizer.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT o_orderpriority, COUNT(*) AS n FROM orders WHERE o_orderdate >= '1995-01-01' AND o_orderdate < '1995-01-01' + INTERVAL 1 YEAR GROUP BY o_orderpriority ORDER BY o_orderpriority",
+      "rationale": "Using INTERVAL can be a more explicit way to specify a date range.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT o_orderpriority, COUNT(*) AS n FROM orders WHERE o_orderdate >= '1995-01-01' AND o_orderdate < '1995-01-01' + INTERVAL 12 MONTH GROUP BY o_orderpriority ORDER BY o_orderpriority",
+      "rationale": "Using MONTH can be another way to specify a date range, potentially utilizing an index on o_orderdate.",
       "status": "valid",
       "check": {
         "valid": true,

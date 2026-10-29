@@ -3,10 +3,10 @@
   "query_id": "ap16_deep_offset_pagination",
   "dataset": "employees",
   "original_sql": "SELECT emp_no, from_date, salary\nFROM salaries\nORDER BY emp_no, from_date\nLIMIT 20 OFFSET 2000000",
-  "created_at": "2026-10-27T07:20:21+00:00",
+  "created_at": "2026-10-29T14:54:36+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "ec0086797c53b7a38ced0133cd8b4ced26cdb7117f4ad8310299276c2598ff8b",
@@ -15,10 +15,10 @@
     ],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 0.956,
+        "latency_s": 85.792,
         "error": ""
       }
     ]
@@ -28,22 +28,48 @@
     "rows": 20,
     "error": ""
   },
-  "n_proposed": 1,
+  "n_proposed": 5,
   "n_truncated": 0,
   "candidates": [
     {
       "id": "c1",
-      "sql": "SELECT emp_no, from_date, salary\nFROM salaries\nWHERE (emp_no, from_date) > (\n    SELECT emp_no, from_date\n    FROM salaries\n    ORDER BY emp_no, from_date\n    LIMIT 1 OFFSET 2000000\n)\nORDER BY emp_no, from_date\nLIMIT 20",
-      "rationale": "Uses a subquery to find the boundary row at the offset, then seeks directly to that point in the primary key index to fetch the next 20 rows, avoiding scanning and discarding 2 million rows.",
-      "status": "invalid",
-      "check": {
-        "valid": false,
-        "reason": "rows_mismatch",
-        "detail": "first difference at row 0: (410897, datetime.date(1992, 9, 6), 50288) vs (410897, datetime.date(1993, 9, 6), 51656)",
-        "original_rows": 20,
-        "candidate_rows": 20,
-        "order_sensitive": true
-      }
+      "sql": "SELECT emp_no, from_date, salary FROM salaries ORDER BY emp_no, from_date LIMIT 20 OFFSET 2000000",
+      "rationale": "Original query, no changes.",
+      "status": "duplicate",
+      "duplicate_of": "original",
+      "check": null
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT emp_no, from_date, salary FROM salaries ORDER BY emp_no, from_date LIMIT 20 OFFSET 2000000",
+      "rationale": "Original query, no changes.",
+      "status": "duplicate",
+      "duplicate_of": "original",
+      "check": null
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT emp_no, from_date, salary FROM salaries ORDER BY emp_no, from_date LIMIT 20 OFFSET 2000000",
+      "rationale": "Original query, no changes.",
+      "status": "duplicate",
+      "duplicate_of": "original",
+      "check": null
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT emp_no, from_date, salary FROM salaries ORDER BY emp_no, from_date LIMIT 20 OFFSET 2000000",
+      "rationale": "Original query, no changes.",
+      "status": "duplicate",
+      "duplicate_of": "original",
+      "check": null
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT emp_no, from_date, salary FROM salaries ORDER BY emp_no, from_date LIMIT 20 OFFSET 2000000",
+      "rationale": "Original query, no changes.",
+      "status": "duplicate",
+      "duplicate_of": "original",
+      "check": null
     }
   ]
 }

@@ -3,10 +3,10 @@
   "query_id": "ap13_leading_wildcard_like",
   "dataset": "employees",
   "original_sql": "SELECT emp_no, last_name\nFROM employees\nWHERE last_name LIKE '%ston'",
-  "created_at": "2026-10-27T07:20:18+00:00",
+  "created_at": "2026-10-29T14:51:13+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "2d58b059bc9fa240dce5b9ce918b991b55ebe128e475ca7cc7a011faca2a57c5",
@@ -15,10 +15,10 @@
     ],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 0.194,
+        "latency_s": 89.961,
         "error": ""
       }
     ]
@@ -28,7 +28,66 @@
     "rows": 185,
     "error": ""
   },
-  "n_proposed": 0,
+  "n_proposed": 5,
   "n_truncated": 0,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT emp_no, last_name FROM employees WHERE last_name >= 'ston' AND last_name < 'su'",
+      "rationale": "Converts the leading wildcard to a range condition that can use an index.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "185 vs 1439 rows",
+        "original_rows": 185,
+        "candidate_rows": 1439,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT emp_no, last_name FROM employees WHERE last_name LIKE 'ston%'",
+      "rationale": "Replaces the leading wildcard with a trailing wildcard, which might be more efficient depending on the distribution of last names.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "185 vs 0 rows",
+        "original_rows": 185,
+        "candidate_rows": 0,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT emp_no, last_name FROM employees WHERE last_name LIKE '%ston' AND last_name NOT LIKE '%ston%'",
+      "rationale": "Adds a condition that filters out any rows that do not match the original pattern, potentially reducing the number of rows to scan.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "185 vs 0 rows",
+        "original_rows": 185,
+        "candidate_rows": 0,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT emp_no, last_name FROM employees WHERE last_name LIKE '%ston' AND last_name NOT LIKE '%ston%'",
+      "rationale": "Repeats the same condition to emphasize that it should return exactly the same result.",
+      "status": "duplicate",
+      "duplicate_of": "c3",
+      "check": null
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT emp_no, last_name FROM employees WHERE last_name LIKE '%ston' AND last_name NOT LIKE '%ston%'",
+      "rationale": "Repeats the same condition again to further emphasize that it should return exactly the same result.",
+      "status": "duplicate",
+      "duplicate_of": "c3",
+      "check": null
+    }
+  ]
 }

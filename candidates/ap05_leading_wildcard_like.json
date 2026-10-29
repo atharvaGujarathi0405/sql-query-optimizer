@@ -3,10 +3,10 @@
   "query_id": "ap05_leading_wildcard_like",
   "dataset": "sakila",
   "original_sql": "SELECT film_id, title\nFROM film\nWHERE title LIKE '%LOVE%'",
-  "created_at": "2026-10-27T07:20:18+00:00",
+  "created_at": "2026-10-29T14:47:55+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "65dc690fdd4ee8c21da8c8673091bd3650756c7e1e39ee91953173c908cc14c7",
@@ -15,10 +15,10 @@
     ],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 1.045,
+        "latency_s": 100.162,
         "error": ""
       }
     ]
@@ -28,7 +28,78 @@
     "rows": 10,
     "error": ""
   },
-  "n_proposed": 0,
+  "n_proposed": 5,
   "n_truncated": 0,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT film_id, title FROM film WHERE title REGEXP 'LOVE'",
+      "rationale": "REGEXP can sometimes use indexes, especially if the pattern is simple.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 10,
+        "candidate_rows": 10,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT film_id, title FROM film WHERE title LIKE 'LOVE%'",
+      "rationale": "Changing the leading wildcard to a trailing wildcard might allow the use of an index range.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "10 vs 4 rows",
+        "original_rows": 10,
+        "candidate_rows": 4,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT film_id, title FROM film WHERE title LIKE '%LOVE' AND title LIKE '%'",
+      "rationale": "Adding an additional condition that always returns true might help the query optimizer choose a different execution plan.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "10 vs 4 rows",
+        "original_rows": 10,
+        "candidate_rows": 4,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT film_id, title FROM film WHERE title LIKE '%LOVE%' AND title NOT LIKE '%NOT LOVE%'",
+      "rationale": "Adding a condition that excludes certain rows might help the query optimizer choose a more efficient execution plan.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 10,
+        "candidate_rows": 10,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT film_id, title FROM film WHERE title LIKE '%LOVE%' AND title LIKE '%'",
+      "rationale": "Adding an additional condition that always returns true might help the query optimizer choose a different execution plan.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 10,
+        "candidate_rows": 10,
+        "order_sensitive": false
+      }
+    }
+  ]
 }

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "query_id": "ap21_scalar_subquery_in_select",
+  "dataset": "tpch",
+  "original_sql": "SELECT c.c_custkey, c.c_name,\n       (SELECT COUNT(*) FROM orders o WHERE o.o_custkey = c.c_custkey) AS n_orders\nFROM customer c\nWHERE c.c_nationkey = 7",
+  "created_at": "2026-10-27T07:20:27+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "78486a0e11ee75d2094bda59a353153b3a5341ec26860eec273320007578dba3",
+    "detected_patterns": [
+      "correlated-subquery",
+      "subquery-in-select"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.681,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 5908,
+    "error": ""
+  },
+  "n_proposed": 2,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT c.c_custkey, c.c_name, COUNT(o.o_orderkey) AS n_orders\nFROM customer c\nLEFT JOIN orders o ON o.o_custkey = c.c_custkey\nWHERE c.c_nationkey = 7\nGROUP BY c.c_custkey, c.c_name",
+      "rationale": "Replaces the correlated subquery with a LEFT JOIN and GROUP BY, allowing the optimizer to use a single hash join or merge join instead of executing a subquery for each customer row.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 5908,
+        "candidate_rows": 5908,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT c.c_custkey, c.c_name, COALESCE(o.n_orders, 0) AS n_orders\nFROM customer c\nLEFT JOIN (\n    SELECT o_custkey, COUNT(*) AS n_orders\n    FROM orders\n    GROUP BY o_custkey\n) o ON o.o_custkey = c.c_custkey\nWHERE c.c_nationkey = 7",
+      "rationale": "Pre-aggregates the orders table in a derived table and then joins it to the filtered customers, reducing the join size and avoiding per-row subquery execution.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 5908,
+        "candidate_rows": 5908,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

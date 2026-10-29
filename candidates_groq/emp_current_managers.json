@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "query_id": "emp_current_managers",
+  "dataset": "employees",
+  "original_sql": "SELECT d.dept_name, e.first_name, e.last_name, dm.from_date\nFROM dept_manager dm\nJOIN employees e ON e.emp_no = dm.emp_no\nJOIN departments d ON d.dept_no = dm.dept_no\nWHERE dm.to_date = '9999-01-01'\nORDER BY d.dept_name",
+  "created_at": "2026-10-27T07:10:55+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "60acdc81a84521d0f6a35713f034f2b6c21219a368ad99a5bea6b184ec458846",
+    "detected_patterns": [],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.306,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 9,
+    "error": ""
+  },
+  "n_proposed": 0,
+  "n_truncated": 0,
+  "candidates": []
+}

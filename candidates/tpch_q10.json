@@ -3,20 +3,20 @@
   "query_id": "tpch_q10",
   "dataset": "tpch",
   "original_sql": "SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue,\n       c_acctbal, n_name, c_address, c_phone, c_comment\nFROM customer, orders, lineitem, nation\nWHERE c_custkey = o_custkey\n  AND l_orderkey = o_orderkey\n  AND o_orderdate >= DATE '1993-10-01'\n  AND o_orderdate < DATE '1993-10-01' + INTERVAL 3 MONTH\n  AND l_returnflag = 'R'\n  AND c_nationkey = n_nationkey\nGROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment\nORDER BY revenue DESC, c_custkey\nLIMIT 20",
-  "created_at": "2026-10-27T07:20:36+00:00",
+  "created_at": "2026-10-29T17:10:12+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "093e0b9b38b82486e29009bc723afda2312835d68f07cbfe261181a176017081",
     "detected_patterns": [],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 1.232,
+        "latency_s": 261.799,
         "error": ""
       }
     ]
@@ -26,7 +26,60 @@
     "rows": 20,
     "error": ""
   },
-  "n_proposed": 0,
+  "n_proposed": 5,
   "n_truncated": 0,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue, c_acctbal, n_name, c_address, c_phone, c_comment FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN nation AS n ON c.c_nationkey = n.n_nationkey WHERE o.o_orderdate >= '1993-10-01' AND o.o_orderdate < '1993-10-01' + INTERVAL 3 MONTH AND l.l_returnflag = 'R' GROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment ORDER BY revenue DESC, c_custkey LIMIT 20",
+      "rationale": "Rewritten using JOIN syntax for better readability and potential optimization.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 20,
+        "candidate_rows": 20,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue, c_acctbal, n_name, c_address, c_phone, c_comment FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN nation AS n ON c.c_nationkey = n.n_nationkey WHERE o.o_orderdate BETWEEN '1993-10-01' AND '1993-12-31' AND l.l_returnflag = 'R' GROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment ORDER BY revenue DESC, c_custkey LIMIT 20",
+      "rationale": "Rewritten using BETWEEN for date range for potential optimization.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 20,
+        "candidate_rows": 20,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue, c_acctbal, n_name, c_address, c_phone, c_comment FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN nation AS n ON c.c_nationkey = n.n_nationkey WHERE o.o_orderdate >= '1993-10-01' AND o.o_orderdate < '1993-10-01' + INTERVAL 3 MONTH AND l.l_returnflag = 'R' GROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment ORDER BY revenue DESC, c_custkey LIMIT 20",
+      "rationale": "Rewritten using BETWEEN for date range for potential optimization.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue, c_acctbal, n_name, c_address, c_phone, c_comment FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN nation AS n ON c.c_nationkey = n.n_nationkey WHERE o.o_orderdate >= '1993-10-01' AND o.o_orderdate < '1993-10-01' + INTERVAL 3 MONTH AND l.l_returnflag = 'R' GROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment ORDER BY revenue DESC, c_custkey LIMIT 20",
+      "rationale": "Rewritten using BETWEEN for date range for potential optimization.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue, c_acctbal, n_name, c_address, c_phone, c_comment FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN nation AS n ON c.c_nationkey = n.n_nationkey WHERE o.o_orderdate >= '1993-10-01' AND o.o_orderdate < '1993-10-01' + INTERVAL 3 MONTH AND l.l_returnflag = 'R' GROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment ORDER BY revenue DESC, c_custkey LIMIT 20",
+      "rationale": "Rewritten using BETWEEN for date range for potential optimization.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    }
+  ]
 }

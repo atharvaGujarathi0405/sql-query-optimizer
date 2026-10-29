@@ -3,10 +3,10 @@
   "query_id": "ap15_having_instead_of_where",
   "dataset": "employees",
   "original_sql": "SELECT dept_no, COUNT(*) AS n\nFROM dept_emp\nGROUP BY dept_no\nHAVING dept_no = 'd005'",
-  "created_at": "2026-10-27T07:20:19+00:00",
+  "created_at": "2026-10-29T14:53:09+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "1fcabec6a85ea25ee97b36d89df478bb748910a8e01576ed703689dd28a0f6fa",
@@ -15,10 +15,10 @@
     ],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 0.242,
+        "latency_s": 114.85,
         "error": ""
       }
     ]
@@ -28,18 +28,74 @@
     "rows": 1,
     "error": ""
   },
-  "n_proposed": 1,
+  "n_proposed": 5,
   "n_truncated": 0,
   "candidates": [
     {
       "id": "c1",
-      "sql": "SELECT dept_no, COUNT(*) AS n\nFROM dept_emp\nWHERE dept_no = 'd005'\nGROUP BY dept_no",
-      "rationale": "Moves the non-aggregate filter from HAVING to WHERE to allow early filtering and index usage on dept_no.",
+      "sql": "SELECT dept_no, COUNT(*) AS n FROM dept_emp WHERE dept_no = 'd005' GROUP BY dept_no",
+      "rationale": "Converts HAVING to WHERE to filter earlier, potentially reducing the number of rows processed.",
       "status": "valid",
       "check": {
         "valid": true,
         "reason": "ok",
         "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT dept_no, COUNT(*) AS n FROM dept_emp WHERE dept_no = 'd005'",
+      "rationale": "Simplifies the query by removing the GROUP BY clause since the HAVING condition is not needed.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT dept_no, COUNT(*) AS n FROM dept_emp WHERE dept_no = 'd005' AND to_date = '9999-01-01'",
+      "rationale": "Adds a condition to filter out rows where to_date is not the maximum possible date, which might be redundant but could help the optimizer.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "rows_mismatch",
+        "detail": "1 row(s) only in original, e.g. ('d005', 85707); 1 only in candidate, e.g. ('d005', 61386)",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT dept_no, COUNT(*) AS n FROM dept_emp WHERE dept_no = 'd005' AND from_date <= '2023-04-01'",
+      "rationale": "Adds a condition to filter out rows where from_date is after a certain date, which might be redundant but could help the optimizer.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT dept_no, COUNT(*) AS n FROM dept_emp WHERE dept_no = 'd005' AND emp_no IN (SELECT emp_no FROM employees WHERE emp_no = 10001)",
+      "rationale": "Replaces the HAVING condition with a subquery that filters the employees table, which might be more efficient.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "rows_mismatch",
+        "detail": "1 row(s) only in original, e.g. ('d005', 85707); 1 only in candidate, e.g. ('d005', 1)",
         "original_rows": 1,
         "candidate_rows": 1,
         "order_sensitive": false

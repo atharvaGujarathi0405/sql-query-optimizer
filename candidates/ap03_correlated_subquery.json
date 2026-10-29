@@ -3,10 +3,10 @@
   "query_id": "ap03_correlated_subquery",
   "dataset": "sakila",
   "original_sql": "SELECT p.payment_id, p.customer_id, p.amount\nFROM payment p\nWHERE p.amount > (SELECT AVG(p2.amount) FROM payment p2 WHERE p2.customer_id = p.customer_id)",
-  "created_at": "2026-10-27T07:10:06+00:00",
+  "created_at": "2026-10-29T14:46:14+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "460f33245fc8dd547714ac54c64bb4d2027e3dd191e80bd82e29dde1b5fce829",
@@ -15,10 +15,10 @@
     ],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 1.868,
+        "latency_s": 156.22,
         "error": ""
       }
     ]
@@ -33,8 +33,8 @@
   "candidates": [
     {
       "id": "c1",
-      "sql": "SELECT p.payment_id, p.customer_id, p.amount\nFROM payment p\nJOIN (\n    SELECT customer_id, AVG(amount) AS avg_amount\n    FROM payment\n    GROUP BY customer_id\n) c ON p.customer_id = c.customer_id\nWHERE p.amount > c.avg_amount",
-      "rationale": "Replaces the correlated subquery with a derived table that computes the average amount per customer once, then joins it to the main table, avoiding repeated subquery execution.",
+      "sql": "SELECT p.payment_id, p.customer_id, p.amount FROM payment p JOIN (SELECT customer_id, AVG(amount) AS avg_amount FROM payment GROUP BY customer_id) sub ON p.customer_id = sub.customer_id WHERE p.amount > sub.avg_amount",
+      "rationale": "Rewrites the correlated subquery into a join with a subquery that calculates the average amount per customer, which can be more efficient due to reduced row scanning.",
       "status": "valid",
       "check": {
         "valid": true,
@@ -47,8 +47,8 @@
     },
     {
       "id": "c2",
-      "sql": "SELECT p.payment_id, p.customer_id, p.amount\nFROM payment p\nWHERE p.amount > (SELECT AVG(p2.amount) FROM payment p2 WHERE p2.customer_id = p.customer_id)\nAND p.customer_id IS NOT NULL",
-      "rationale": "Adds an explicit NULL check to ensure the subquery only runs for non-NULL customer_ids, which can help the optimizer prune unnecessary subquery executions.",
+      "sql": "SELECT p.payment_id, p.customer_id, p.amount FROM payment p WHERE p.amount > (SELECT AVG(amount) FROM payment WHERE customer_id = p.customer_id) AND p.customer_id IN (SELECT customer_id FROM payment GROUP BY customer_id HAVING COUNT(*) > 1)",
+      "rationale": "Adds a condition to only consider customers with multiple payments, which can reduce the number of rows processed by the subquery.",
       "status": "valid",
       "check": {
         "valid": true,
@@ -61,8 +61,8 @@
     },
     {
       "id": "c3",
-      "sql": "SELECT p.payment_id, p.customer_id, p.amount\nFROM payment p\nWHERE EXISTS (\n    SELECT 1\n    FROM payment p2\n    WHERE p2.customer_id = p.customer_id\n    AND p2.amount < p.amount\n)\nAND p.amount > (SELECT AVG(p2.amount) FROM payment p2 WHERE p2.customer_id = p.customer_id)",
-      "rationale": "Adds an EXISTS check to quickly filter out rows where no payment in the same customer group is less than the current amount, potentially reducing the number of rows for which the average subquery is evaluated.",
+      "sql": "SELECT p.payment_id, p.customer_id, p.amount FROM payment p WHERE p.amount > (SELECT AVG(amount) FROM payment WHERE customer_id = p.customer_id) AND p.customer_id NOT IN (SELECT customer_id FROM payment GROUP BY customer_id HAVING COUNT(*) = 1)",
+      "rationale": "Excludes customers with only one payment, which can simplify the subquery and reduce the number of rows processed.",
       "status": "valid",
       "check": {
         "valid": true,
@@ -75,22 +75,22 @@
     },
     {
       "id": "c4",
-      "sql": "SELECT p.payment_id, p.customer_id, p.amount\nFROM payment p\nJOIN (\n    SELECT customer_id, AVG(amount) AS avg_amount\n    FROM payment\n    GROUP BY customer_id\n) c ON p.customer_id = c.customer_id\nWHERE p.amount > c.avg_amount\nAND p.customer_id IS NOT NULL",
-      "rationale": "Combines the derived table approach with an explicit NULL check to ensure only valid customer_ids are processed, improving both correctness and performance.",
-      "status": "valid",
+      "sql": "SELECT p.payment_id, p.customer_id, p.amount FROM payment p WHERE p.amount > (SELECT AVG(amount) FROM payment WHERE customer_id = p.customer_id) AND p.customer_id IN (SELECT customer_id FROM payment WHERE payment_date BETWEEN '2020-01-01 00:00:00' AND '2020-12-31 23:59:59')",
+      "rationale": "Adds a date range condition to only consider payments within a specific period, which can reduce the number of rows processed by the subquery.",
+      "status": "invalid",
       "check": {
-        "valid": true,
-        "reason": "ok",
-        "detail": "",
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "7895 vs 0 rows",
         "original_rows": 7895,
-        "candidate_rows": 7895,
+        "candidate_rows": 0,
         "order_sensitive": false
       }
     },
     {
       "id": "c5",
-      "sql": "SELECT p.payment_id, p.customer_id, p.amount\nFROM payment p\nWHERE p.amount > (SELECT AVG(p2.amount) FROM payment p2 WHERE p2.customer_id = p.customer_id)\nAND p.customer_id IN (SELECT customer_id FROM payment GROUP BY customer_id HAVING AVG(amount) IS NOT NULL)",
-      "rationale": "Adds a semi-join to pre-filter customer_ids that have a valid average amount, reducing the scope of the correlated subquery execution.",
+      "sql": "SELECT p.payment_id, p.customer_id, p.amount FROM payment p WHERE p.amount > (SELECT AVG(amount) FROM payment WHERE customer_id = p.customer_id) AND p.customer_id IN (SELECT customer_id FROM payment WHERE amount > 0)",
+      "rationale": "Excludes payments with zero amount, which can simplify the subquery and reduce the number of rows processed.",
       "status": "valid",
       "check": {
         "valid": true,

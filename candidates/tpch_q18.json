@@ -3,20 +3,20 @@
   "query_id": "tpch_q18",
   "dataset": "tpch",
   "original_sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty\nFROM customer, orders, lineitem\nWHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300)\n  AND c_custkey = o_custkey\n  AND o_orderkey = l_orderkey\nGROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice\nORDER BY o_totalprice DESC, o_orderdate, o_orderkey\nLIMIT 100",
-  "created_at": "2026-10-27T07:20:57+00:00",
+  "created_at": "2026-10-29T17:13:31+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "1ea1fb6997a56983b452c8240b120f5652f2ba60cf1ea33312266bbe573d7e4d",
     "detected_patterns": [],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 1.666,
+        "latency_s": 192.495,
         "error": ""
       }
     ]
@@ -26,13 +26,13 @@
     "rows": 57,
     "error": ""
   },
-  "n_proposed": 3,
+  "n_proposed": 5,
   "n_truncated": 0,
   "candidates": [
     {
       "id": "c1",
-      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty\nFROM customer\nJOIN orders ON c_custkey = o_custkey\nJOIN lineitem ON o_orderkey = l_orderkey\nWHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300)\nGROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice\nORDER BY o_totalprice DESC, o_orderdate, o_orderkey\nLIMIT 100",
-      "rationale": "Replaces implicit comma joins with explicit INNER JOINs to improve query plan clarity and optimizer hinting, though the core logic remains identical.",
+      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON o_orderkey = l_orderkey WHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300) GROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice ORDER BY o_totalprice DESC, o_orderdate, o_orderkey LIMIT 100",
+      "rationale": "Rewritten to use JOINs instead of implicit joins for better readability and potential optimization.",
       "status": "valid",
       "check": {
         "valid": true,
@@ -45,31 +45,35 @@
     },
     {
       "id": "c2",
-      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty\nFROM customer\nJOIN orders ON c_custkey = o_custkey\nJOIN lineitem ON o_orderkey = l_orderkey\nWHERE EXISTS (SELECT 1 FROM lineitem li2 WHERE li2.l_orderkey = o_orderkey GROUP BY li2.l_orderkey HAVING SUM(li2.l_quantity) > 300)\nGROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice\nORDER BY o_totalprice DESC, o_orderdate, o_orderkey\nLIMIT 100",
-      "rationale": "Replaces the IN subquery with an EXISTS correlated subquery, which can sometimes be more efficient if the optimizer chooses a semi-join strategy that avoids materializing the entire subquery result set.",
-      "status": "valid",
-      "check": {
-        "valid": true,
-        "reason": "ok",
-        "detail": "",
-        "original_rows": 57,
-        "candidate_rows": 57,
-        "order_sensitive": true
-      }
+      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON o_orderkey = l_orderkey WHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300) GROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice ORDER BY o_totalprice DESC, o_orderdate, o_orderkey LIMIT 100",
+      "rationale": "Rewritten to use JOINs instead of implicit joins for better readability and potential optimization.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
     },
     {
       "id": "c3",
-      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty\nFROM customer\nJOIN orders ON c_custkey = o_custkey\nJOIN lineitem ON o_orderkey = l_orderkey\nJOIN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300) AS filtered_orders ON o_orderkey = filtered_orders.l_orderkey\nGROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice\nORDER BY o_totalprice DESC, o_orderdate, o_orderkey\nLIMIT 100",
-      "rationale": "Converts the IN subquery into a derived table join, allowing the optimizer to potentially materialize the filtered order keys once and join against them, which can be faster if the subquery result is small.",
-      "status": "valid",
-      "check": {
-        "valid": true,
-        "reason": "ok",
-        "detail": "",
-        "original_rows": 57,
-        "candidate_rows": 57,
-        "order_sensitive": true
-      }
+      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON o_orderkey = l_orderkey WHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300) GROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice ORDER BY o_totalprice DESC, o_orderdate, o_orderkey LIMIT 100",
+      "rationale": "Rewritten to use JOINs instead of implicit joins for better readability and potential optimization.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON o_orderkey = l_orderkey WHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300) GROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice ORDER BY o_totalprice DESC, o_orderdate, o_orderkey LIMIT 100",
+      "rationale": "Rewritten to use JOINs instead of implicit joins for better readability and potential optimization.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, SUM(l_quantity) AS sum_qty FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON o_orderkey = l_orderkey WHERE o_orderkey IN (SELECT l_orderkey FROM lineitem GROUP BY l_orderkey HAVING SUM(l_quantity) > 300) GROUP BY c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice ORDER BY o_totalprice DESC, o_orderdate, o_orderkey LIMIT 100",
+      "rationale": "Rewritten to use JOINs instead of implicit joins for better readability and potential optimization.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
     }
   ]
 }

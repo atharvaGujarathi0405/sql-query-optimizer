@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "query_id": "tpch_q10",
+  "dataset": "tpch",
+  "original_sql": "SELECT c_custkey, c_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue,\n       c_acctbal, n_name, c_address, c_phone, c_comment\nFROM customer, orders, lineitem, nation\nWHERE c_custkey = o_custkey\n  AND l_orderkey = o_orderkey\n  AND o_orderdate >= DATE '1993-10-01'\n  AND o_orderdate < DATE '1993-10-01' + INTERVAL 3 MONTH\n  AND l_returnflag = 'R'\n  AND c_nationkey = n_nationkey\nGROUP BY c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment\nORDER BY revenue DESC, c_custkey\nLIMIT 20",
+  "created_at": "2026-10-27T07:20:36+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "093e0b9b38b82486e29009bc723afda2312835d68f07cbfe261181a176017081",
+    "detected_patterns": [],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 1.232,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 20,
+    "error": ""
+  },
+  "n_proposed": 0,
+  "n_truncated": 0,
+  "candidates": []
+}

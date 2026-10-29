@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "query_id": "ap17_function_on_column",
+  "dataset": "tpch",
+  "original_sql": "SELECT o_orderpriority, COUNT(*) AS n\nFROM orders\nWHERE YEAR(o_orderdate) = 1995\nGROUP BY o_orderpriority\nORDER BY o_orderpriority",
+  "created_at": "2026-10-27T07:10:11+00:00",
+  "generator": {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "d3cdc51b125527127870e0cb20655085867da780ce0df39e695b32bcdf0e0286",
+    "detected_patterns": [
+      "function-on-column"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "ok": true,
+        "latency_s": 0.445,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 5,
+    "error": ""
+  },
+  "n_proposed": 1,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT o_orderpriority, COUNT(*) AS n FROM orders WHERE o_orderdate >= '1995-01-01' AND o_orderdate < '1996-01-01' GROUP BY o_orderpriority ORDER BY o_orderpriority",
+      "rationale": "Replaces the non-sargable YEAR() function with a range predicate on o_orderdate, allowing the optimizer to use an index on o_orderdate if one exists, or at least perform a more efficient range scan.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    }
+  ]
+}

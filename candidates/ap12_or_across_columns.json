@@ -3,10 +3,10 @@
   "query_id": "ap12_or_across_columns",
   "dataset": "employees",
   "original_sql": "SELECT emp_no, dept_no\nFROM dept_emp\nWHERE dept_no = 'd009' OR from_date = '1990-01-01'",
-  "created_at": "2026-10-27T07:10:55+00:00",
+  "created_at": "2026-10-29T14:49:43+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "976b9f0cce00d3c77f0de2e196937d784ab4d9e2a3d648ca2073f976767588b4",
@@ -15,10 +15,10 @@
     ],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 0.77,
+        "latency_s": 106.339,
         "error": ""
       }
     ]
@@ -28,7 +28,78 @@
     "rows": 23626,
     "error": ""
   },
-  "n_proposed": 0,
+  "n_proposed": 5,
   "n_truncated": 0,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT emp_no, dept_no FROM dept_emp WHERE dept_no = 'd009'",
+      "rationale": "Separates the OR condition into two separate queries, each using a different index.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23626 vs 23580 rows",
+        "original_rows": 23626,
+        "candidate_rows": 23580,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT emp_no, dept_no FROM dept_emp WHERE from_date = '1990-01-01'",
+      "rationale": "Separates the OR condition into two separate queries, each using a different index.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23626 vs 49 rows",
+        "original_rows": 23626,
+        "candidate_rows": 49,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT emp_no, dept_no FROM dept_emp WHERE dept_no = 'd009' UNION SELECT emp_no, dept_no FROM dept_emp WHERE from_date = '1990-01-01'",
+      "rationale": "Uses UNION to combine the results of two separate queries, each using a different index.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 23626,
+        "candidate_rows": 23626,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT emp_no, dept_no FROM dept_emp WHERE dept_no = 'd009' AND from_date <= '1990-01-01' OR dept_no = 'd009' AND from_date > '1990-01-01'",
+      "rationale": "Restructures the OR condition to use a single index by combining the conditions with AND.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23626 vs 23580 rows",
+        "original_rows": 23626,
+        "candidate_rows": 23580,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT emp_no, dept_no FROM dept_emp WHERE dept_no = 'd009' OR (dept_no = 'd009' AND from_date = '1990-01-01')",
+      "rationale": "Restructures the OR condition to use a single index by combining the conditions with AND.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23626 vs 23580 rows",
+        "original_rows": 23626,
+        "candidate_rows": 23580,
+        "order_sensitive": false
+      }
+    }
+  ]
 }

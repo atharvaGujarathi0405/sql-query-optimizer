@@ -3,20 +3,20 @@
   "query_id": "tpch_q05",
   "dataset": "tpch",
   "original_sql": "SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue\nFROM customer, orders, lineitem, supplier, nation, region\nWHERE c_custkey = o_custkey\n  AND l_orderkey = o_orderkey\n  AND l_suppkey = s_suppkey\n  AND c_nationkey = s_nationkey\n  AND s_nationkey = n_nationkey\n  AND n_regionkey = r_regionkey\n  AND r_name = 'ASIA'\n  AND o_orderdate >= DATE '1994-01-01'\n  AND o_orderdate < DATE '1994-01-01' + INTERVAL 1 YEAR\nGROUP BY n_name\nORDER BY revenue DESC",
-  "created_at": "2026-10-27T07:11:09+00:00",
+  "created_at": "2026-10-29T17:05:42+00:00",
   "generator": {
-    "provider": "groq",
-    "model": "qwen/qwen3.8-27b",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.0,
     "seed": 42,
     "prompt_sha256": "e7e02581a7a4ac4c0bf3fa33f2ba216ba30976da09a54ed5984c50aed4419e42",
     "detected_patterns": [],
     "llm_attempts": [
       {
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
         "ok": true,
-        "latency_s": 0.218,
+        "latency_s": 387.301,
         "error": ""
       }
     ]
@@ -26,7 +26,78 @@
     "rows": 5,
     "error": ""
   },
-  "n_proposed": 0,
+  "n_proposed": 5,
   "n_truncated": 0,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN supplier AS s ON l.l_suppkey = s.s_suppkey JOIN nation AS n ON c.c_nationkey = s.s_nationkey JOIN region AS r ON n.n_regionkey = r.r_regionkey WHERE r_name = 'ASIA' AND o_orderdate >= '1994-01-01' AND o_orderdate < '1994-01-01' + INTERVAL 1 YEAR GROUP BY n_name ORDER BY revenue DESC",
+      "rationale": "Rewritten using JOIN syntax for better readability and potential optimization.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "rows_mismatch",
+        "detail": "first difference at row 0: ('INDONESIA', Decimal('55502041.1697')) vs ('VIETNAM', Decimal('1320956635.3505'))",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN supplier AS s ON l.l_suppkey = s.s_suppkey JOIN nation AS n ON c.c_nationkey = s.s_nationkey JOIN region AS r ON n.n_regionkey = r.r_regionkey WHERE r_name = 'ASIA' AND o_orderdate BETWEEN '1994-01-01' AND '1994-12-31' GROUP BY n_name ORDER BY revenue DESC",
+      "rationale": "Rewritten using BETWEEN for date range for potential optimization.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "rows_mismatch",
+        "detail": "first difference at row 0: ('INDONESIA', Decimal('55502041.1697')) vs ('VIETNAM', Decimal('1320956635.3505'))",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN supplier AS s ON l.l_suppkey = s.s_suppkey JOIN nation AS n ON c.c_nationkey = s.s_nationkey JOIN region AS r ON n.n_regionkey = r.r_regionkey WHERE r_name = 'ASIA' AND o_orderdate >= '1994-01-01' AND o_orderdate < '1994-01-01' + INTERVAL 1 YEAR GROUP BY n_name ORDER BY revenue DESC WITH ROLLUP",
+      "rationale": "Added WITH ROLLUP to potentially simplify the query and allow for more efficient aggregation.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "not_select",
+        "detail": "does not parse: Invalid expression / Unexpected token. Line 1, Col: 474.\n  '1994-01-01' AND o_orderdate < '1994-01-01' + INTERVAL 1 YEAR",
+        "original_rows": 5,
+        "candidate_rows": null,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN supplier AS s ON l.l_suppkey = s.s_suppkey JOIN nation AS n ON c.c_nationkey = s.s_nationkey JOIN region AS r ON n.n_regionkey = r.r_regionkey WHERE r_name = 'ASIA' AND o_orderdate >= '1994-01-01' AND o_orderdate < '1994-01-01' + INTERVAL 1 YEAR GROUP BY n_name HAVING revenue > 0 ORDER BY revenue DESC",
+      "rationale": "Added HAVING clause to filter out groups with zero revenue, potentially reducing the number of rows processed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "rows_mismatch",
+        "detail": "first difference at row 0: ('INDONESIA', Decimal('55502041.1697')) vs ('VIETNAM', Decimal('1320956635.3505'))",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT n_name, SUM(l_extendedprice * (1 - l_discount)) AS revenue FROM customer AS c JOIN orders AS o ON c.c_custkey = o.o_custkey JOIN lineitem AS l ON o.o_orderkey = l.l_orderkey JOIN supplier AS s ON l.l_suppkey = s.s_suppkey JOIN nation AS n ON c.c_nationkey = s.s_nationkey JOIN region AS r ON n.n_regionkey = r.r_regionkey WHERE r_name = 'ASIA' AND o_orderdate >= '1994-01-01' AND o_orderdate < '1994-01-01' + INTERVAL 1 YEAR GROUP BY n_name ORDER BY revenue DESC LIMIT 10",
+      "rationale": "Added LIMIT to potentially reduce the number of rows returned, which can be beneficial if only a subset of the results is needed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "rows_mismatch",
+        "detail": "first difference at row 0: ('INDONESIA', Decimal('55502041.1697')) vs ('VIETNAM', Decimal('1320956635.3505'))",
+        "original_rows": 5,
+        "candidate_rows": 5,
+        "order_sensitive": true
+      }
+    }
+  ]
 }
