@@ -45,3 +45,14 @@ python -m app.eval.report results/dev-001.jsonl
 ```
 
 Tune on dev only. Run the test split once, from a clean git tree, with `--allow-test`.
+
+## UI (Phase 6, partial)
+
+Query Studio (optimize a dev query or an ad-hoc one) and a Results page that reads `results/*.jsonl`. The Workload Advisor and Scale Simulator tabs come with Phases 4 and 5.
+
+```sh
+cd backend && uvicorn app.main:app --port 8000     # API
+cd frontend && npm install && npm run dev          # http://localhost:5173 (proxies the API)
+```
+
+Only the dev split is offered in the UI (`GET /queries`), so test-split timings and pools stay unseen before the single frozen test run. Studio runs the real pipeline (timed runs, and an LLM call when no pool is cached), so a new query can take minutes.

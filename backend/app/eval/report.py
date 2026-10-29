@@ -91,6 +91,8 @@ def fmt_p(p):
 
 def _fmt_arm(units: list[dict]) -> str:
     """'c4  x0.08 win' for one pick; 'c1x4,original x1  x0.09 win' when repeats disagree."""
+    if not units:  # a run recorded before this arm existed (e.g. 3-measured in dev-001..003)
+        return "-"
     picks = Counter(u["pick"] for u in units)
     p = ",".join(f"{k}x{n}" for k, n in picks.most_common()) if len(picks) > 1 else next(iter(picks))
     rs = [u["ratio"] for u in units if u["ratio"] is not None]
