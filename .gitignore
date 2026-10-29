@@ -8,3 +8,4 @@ data/raw/
 ollama_models/
 node_modules/
 frontend/dist/
+*.log
