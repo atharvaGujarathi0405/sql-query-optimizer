@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "query_id": "ap07_implicit_cast",
+  "dataset": "sakila",
+  "original_sql": "SELECT address_id, address, postal_code\nFROM address\nWHERE postal_code = 35200",
+  "created_at": "2026-11-22T07:00:33+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "3445e884b0f9a20f5644aee42d76ab4ffc804ec6cdccefd0a43abb052214c117",
+    "detected_patterns": [
+      "implicit-cast"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 93.803,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 1,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT address_id, address, postal_code FROM address WHERE CAST(postal_code AS CHAR) = '35200'",
+      "rationale": "Explicitly cast the postal_code column to CHAR to avoid implicit casting.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT address_id, address, postal_code FROM address WHERE postal_code = '35200'",
+      "rationale": "Ensure the comparison is done with a string to match the column's data type.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT address_id, address, postal_code FROM address WHERE postal_code + 0 = 35200",
+      "rationale": "Add 0 to the postal_code column to implicitly cast it to a number for comparison.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT address_id, address, postal_code FROM address WHERE postal_code = 35200 + 0",
+      "rationale": "Add 0 to the comparison value to implicitly cast it to a number for comparison.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT address_id, address, postal_code FROM address WHERE postal_code = CAST('35200' AS UNSIGNED)",
+      "rationale": "Explicitly cast the comparison value to UNSIGNED to match the column's data type.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

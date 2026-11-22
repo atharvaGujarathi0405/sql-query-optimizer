@@ -35,3 +35,10 @@ tie_band_pct: 5
 # beats it by more than this many baseline IQRs. 0 disables. The raw TOPSIS pick is always recorded
 # as arm "3-raw" so the guard can be judged on the dev set from the same measurements.
 or_noise_guard_iqr_multiple: 1.0
+
+# Declared secondary arm "3-argmin" (written 2026-11-22, BEFORE any test run; dev-006 was the last dev run).
+# No AHP, no TOPSIS: pick the alternative with the lowest measured median runtime, then apply the same
+# noise guard above (decision.runtime_argmin_decision). It exists to measure, not infer, whether the
+# multi-criteria machinery adds anything beyond "fastest measured candidate" (threats 35c, 40). It is
+# scored from the same evaluation-pass data as every other arm and reported next to arm 3, never instead.
+# Post-hoc on dev-006's recorded selection measurements it picks identically to arm 3 on 15 of 15 queries.

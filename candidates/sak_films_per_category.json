@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "query_id": "sak_films_per_category",
+  "dataset": "sakila",
+  "original_sql": "SELECT cat.name, COUNT(*) AS n_films\nFROM category cat\nJOIN film_category fc ON fc.category_id = cat.category_id\nGROUP BY cat.name\nORDER BY cat.name",
+  "created_at": "2026-11-22T07:28:17+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "0c7fb4068885798a644c539e77a57ddf07f0873738447d0b9c8012b09f0d1ed8",
+    "detected_patterns": [],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 116.312,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 16,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT cat.name, COUNT(*) AS n_films FROM category cat JOIN film_category fc ON fc.category_id = cat.category_id GROUP BY cat.category_id ORDER BY cat.category_id",
+      "rationale": "Replaces the GROUP BY on 'name' with 'category_id' to potentially benefit from a more selective index.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 16,
+        "candidate_rows": 16,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT cat.name, COUNT(*) AS n_films FROM category cat JOIN film_category fc ON fc.category_id = cat.category_id WHERE cat.category_id BETWEEN 1 AND 16 GROUP BY cat.name ORDER BY cat.name",
+      "rationale": "Limits the range of category IDs to potentially reduce the number of rows processed.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 16,
+        "candidate_rows": 16,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT cat.name, COUNT(*) AS n_films FROM category cat JOIN film_category fc ON fc.category_id = cat.category_id WHERE cat.name LIKE 'A%' GROUP BY cat.name ORDER BY cat.name",
+      "rationale": "Limits the category names to those starting with 'A' to reduce the number of rows processed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "16 vs 2 rows",
+        "original_rows": 16,
+        "candidate_rows": 2,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT cat.name, COUNT(*) AS n_films FROM category cat JOIN film_category fc ON fc.category_id = cat.category_id WHERE cat.name NOT LIKE 'Z%' GROUP BY cat.name ORDER BY cat.name",
+      "rationale": "Excludes category names starting with 'Z' to reduce the number of rows processed.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 16,
+        "candidate_rows": 16,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT cat.name, COUNT(*) AS n_films FROM category cat JOIN film_category fc ON fc.category_id = cat.category_id WHERE cat.name IS NOT NULL GROUP BY cat.name ORDER BY cat.name",
+      "rationale": "Ensures that only non-NULL category names are processed, which might be faster if NULLs are common.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 16,
+        "candidate_rows": 16,
+        "order_sensitive": true
+      }
+    }
+  ]
+}

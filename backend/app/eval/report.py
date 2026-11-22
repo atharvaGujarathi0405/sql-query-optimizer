@@ -18,9 +18,9 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 
-ARMS = ["1", "2a", "2b", "3", "3-measured", "3-raw"]
-NAMES = {"1": "1  baseline", "2a": "2a LLM (SQL+schema)", "2b": "2b LLM (+metrics)", "3": "3  OR engine", "3-measured": "3m OR, measured only", "3-raw": "3-raw OR, no guard"}
-PAIRS = [("3", "2b"), ("3", "2a"), ("2b", "2a"), ("3-measured", "2b"), ("3-measured", "3"), ("3-raw", "2b")]
+ARMS = ["1", "2a", "2b", "3", "3-measured", "3-argmin", "3-raw"]
+NAMES = {"1": "1  baseline", "2a": "2a LLM (SQL+schema)", "2b": "2b LLM (+metrics)", "3": "3  OR engine", "3-measured": "3m OR, measured only", "3-argmin": "3a fastest measured", "3-raw": "3-raw OR, no guard"}
+PAIRS = [("3", "2b"), ("3", "2a"), ("2b", "2a"), ("3-measured", "2b"), ("3-measured", "3"), ("3-argmin", "3"), ("3-argmin", "2b"), ("3-raw", "2b")]
 LLM_ARMS = ("2a", "2b")
 
 
@@ -85,6 +85,17 @@ def per_query_log_ratio(scored: list[dict], arm: str) -> dict[str, float]:
     return {q: float(np.mean(v)) for q, v in acc.items()}
 
 
+def bootstrap_ci(d, n_boot: int = 10_000, seed: int = 20261122) -> tuple[float, float] | None:
+    """95% percentile bootstrap CI of the mean paired difference (resampling queries). Fixed seed."""
+    d = np.asarray(d, float)
+    if len(d) < 2 or not d.any():
+        return None if len(d) < 2 else (0.0, 0.0)
+    rng = np.random.default_rng(seed)
+    means = d[rng.integers(0, len(d), size=(n_boot, len(d)))].mean(axis=1)
+    lo, hi = np.percentile(means, [2.5, 97.5])
+    return float(lo), float(hi)
+
+
 def fmt_p(p):
     return "n/a" if p is None else f"{p:.4f}"
 
@@ -104,12 +115,30 @@ def _fmt_arm(units: list[dict]) -> str:
 def per_query_section(data: dict, sc: list[dict], contested: list[dict]) -> list[str]:
     """One row per contested query: what each arm picked, mean ratio to baseline (x0.10 = 10x faster), outcome."""
     L = ["CONTESTED QUERIES (pool has >= 1 valid candidate); ratio = pick time / baseline time, lower is better",
-         f"{'query':32}{'valid':>6}{'base ms':>9}   {'3 (OR)':24}{'3-measured':24}{'3-raw':22}{'2b':22}2a"]
+         f"{'query':32}{'valid':>6}{'base ms':>9}   {'3 (OR)':24}{'3-measured':24}{'3-argmin':24}{'3-raw':22}{'2b':22}2a"]
     for q in contested:
         qid = q["query_id"]
         base = data["ev"].get((qid, "original"))
-        cells = {a: _fmt_arm([s for s in sc if s["query_id"] == qid and s["arm"] == a]) for a in ("3", "3-measured", "3-raw", "2b", "2a")}
-        L.append(f"{qid[:31]:32}{q['n_valid']:>6}{base['runtime_ms_median']:>9.1f}   {cells['3']:24}{cells['3-measured']:24}{cells['3-raw']:22}{cells['2b']:22}{cells['2a']}")
+        cells = {a: _fmt_arm([s for s in sc if s["query_id"] == qid and s["arm"] == a]) for a in ("3", "3-measured", "3-argmin", "3-raw", "2b", "2a")}
+        L.append(f"{qid[:31]:32}{q['n_valid']:>6}{base['runtime_ms_median']:>9.1f}   {cells['3']:24}{cells['3-measured']:24}{cells['3-argmin']:24}{cells['3-raw']:22}{cells['2b']:22}{cells['2a']}")
+    L.append("")
+    return L
+
+
+def per_category_section(data: dict, sc: list[dict], queries: list[dict]) -> list[str]:
+    """Win/tie/loss per arm within each registry category (first tag: antipattern | tpch-standard | natural)."""
+    cat = {q["query_id"]: q["tags"][0] for q in queries}
+    L = ["PER CATEGORY (units as in the per-arm table; cells are small: anecdotal, not tests)",
+         f"{'category':16}{'queries':>8}  " + "  ".join(f"{a:>12}" for a in ARMS if a != "1")]
+    for c in sorted(set(cat.values())):
+        row = []
+        for a in ARMS:
+            if a == "1":
+                continue
+            u = [s for s in sc if s["arm"] == a and cat.get(s["query_id"]) == c]
+            k = Counter(s["outcome"] for s in u)
+            row.append(f"{k['win']}w/{k['tie']}t/{k['loss']}l" if u else "-")
+        L.append(f"{c:16}{sum(1 for v in cat.values() if v == c):>8}  " + "  ".join(f"{x:>12}" for x in row))
     L.append("")
     return L
 
@@ -145,7 +174,7 @@ def report(path: Path) -> str:
         L.append(f"{NAMES[arm]:22}{len(u):>6}{(np.median(ms) if ms else float('nan')):>11.2f}{(np.median(rt) if rt else float('nan')):>14.4f}"
                  f"{c['win']:>5}{c['tie']:>5}{c['loss']:>6}{c['timeout']:>9}{c['error'] + c['baseline_failed']:>7}"
                  f"{sum(1 for s in u if s['fallback']):>10}")
-    L.append("  units = queries for arms 1/3/3-measured/3-raw, query x repeat for 2a/2b. 'fallback' = failure scored as the original.")
+    L.append("  units = queries for arms 1/3/3-measured/3-argmin/3-raw, query x repeat for 2a/2b. 'fallback' = failure scored as the original.")
     L.append("")
 
     L += per_query_section(data, sc, contested)
@@ -169,7 +198,7 @@ def report(path: Path) -> str:
     L.append("")
 
     L.append("PAIRED COMPARISONS: per-query mean ln(ratio to baseline); negative difference = first arm is faster")
-    L.append(f"{'first vs second':18}{'n':>4}{'identical':>10}{'median diff':>13}{'= speed':>10}{'Wilcoxon p':>12}{'effect r':>10}")
+    L.append(f"{'first vs second':18}{'n':>4}{'identical':>10}{'median diff':>13}{'= speed':>10}{'Wilcoxon p':>12}{'effect r':>10}   95% CI of mean diff (bootstrap)")
     for a, b in PAIRS:
         la, lb = per_query_log_ratio(sc, a), per_query_log_ratio(sc, b)
         common = sorted(set(la) & set(lb))
@@ -177,11 +206,15 @@ def report(path: Path) -> str:
             continue
         r = wilcoxon_paired([la[q] for q in common], [lb[q] for q in common])
         md = r["median_diff"]
+        ci = bootstrap_ci([la[q] - lb[q] for q in common])
         L.append(f"{a + ' vs ' + b:18}{r['n']:>4}{r['n_zero']:>10}{md:>13.4f}{(math.exp(md) - 1) * 100:>+9.1f}%{fmt_p(r['p']):>12}"
-                 f"{'n/a' if r['r'] is None else format(r['r'], '+.2f'):>10}")
+                 f"{'n/a' if r['r'] is None else format(r['r'], '+.2f'):>10}   "
+                 f"{'n/a' if ci is None else f'[{ci[0]:+.3f}, {ci[1]:+.3f}]'}")
     L.append("  effect r = matched-pairs rank-biserial (-1..+1). 'identical' pairs are dropped from the test. With few")
     L.append("  queries the p-values have almost no power: read the effect size and the counts, not the stars.")
+    L.append("  CI: 10,000 resamples of queries, fixed seed; a CI that spans 0 means no detectable difference.")
     L.append("")
+    L += per_category_section(data, sc, queries)
 
     L.append("FAILURES (nothing is dropped; each is also scored as the original where an arm was affected)")
     c = Counter((f["stage"], f["kind"]) for f in data["failures"])

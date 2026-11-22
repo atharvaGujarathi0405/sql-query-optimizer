@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "query_id": "ap10_correlated_max_subquery",
+  "dataset": "employees",
+  "original_sql": "SELECT e.emp_no, s.salary\nFROM employees e\nJOIN salaries s ON s.emp_no = e.emp_no\nWHERE e.hire_date >= '1999-01-01'\n  AND s.salary = (SELECT MAX(s2.salary) FROM salaries s2 WHERE s2.emp_no = e.emp_no)",
+  "created_at": "2026-11-22T07:07:04+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "7131cd081f83324f0c49cdc2bef0b5b0476acc7a0e68f28515b1be3f5c34c8eb",
+    "detected_patterns": [
+      "correlated-subquery"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 153.701,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 1527,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT e.emp_no, s.salary FROM employees e JOIN salaries s ON s.emp_no = e.emp_no JOIN (SELECT emp_no, MAX(salary) AS max_salary FROM salaries GROUP BY emp_no) m ON s.emp_no = m.emp_no AND s.salary = m.max_salary WHERE e.hire_date >= '1999-01-01'",
+      "rationale": "Subquery is replaced with a JOIN to avoid correlated subquery, which can be more efficient.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1527,
+        "candidate_rows": 1527,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT e.emp_no, s.salary FROM employees e JOIN salaries s ON s.emp_no = e.emp_no WHERE e.hire_date >= '1999-01-01' AND s.salary IN (SELECT MAX(salary) FROM salaries WHERE emp_no = e.emp_no)",
+      "rationale": "Subquery is replaced with an IN clause to potentially utilize index on salary.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 1527,
+        "candidate_rows": 1527,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT e.emp_no, s.salary FROM employees e JOIN salaries s ON s.emp_no = e.emp_no WHERE e.hire_date >= '1999-01-01' AND s.salary = (SELECT MAX(salary) FROM salaries WHERE emp_no = e.emp_no AND salary <= s.salary)",
+      "rationale": "Subquery is modified to use a less restrictive condition to potentially reduce the number of rows processed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "1527 vs 4877 rows",
+        "original_rows": 1527,
+        "candidate_rows": 4877,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT e.emp_no, s.salary FROM employees e JOIN salaries s ON s.emp_no = e.emp_no WHERE e.hire_date >= '1999-01-01' AND s.salary = (SELECT MAX(salary) FROM salaries WHERE emp_no = e.emp_no AND from_date = s.from_date)",
+      "rationale": "Subquery is modified to use a condition that matches the primary key of the salaries table to potentially utilize index.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "1527 vs 4877 rows",
+        "original_rows": 1527,
+        "candidate_rows": 4877,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT e.emp_no, s.salary FROM employees e JOIN salaries s ON s.emp_no = e.emp_no WHERE e.hire_date >= '1999-01-01' AND s.salary = (SELECT MAX(salary) FROM salaries WHERE emp_no = e.emp_no AND to_date = s.to_date)",
+      "rationale": "Subquery is modified to use a condition that matches the primary key of the salaries table to potentially utilize index.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "1527 vs 4875 rows",
+        "original_rows": 1527,
+        "candidate_rows": 4875,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

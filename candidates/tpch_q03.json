@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "query_id": "tpch_q03",
+  "dataset": "tpch",
+  "original_sql": "SELECT l_orderkey, SUM(l_extendedprice * (1 - l_discount)) AS revenue, o_orderdate, o_shippriority\nFROM customer, orders, lineitem\nWHERE c_mktsegment = 'BUILDING'\n  AND c_custkey = o_custkey\n  AND l_orderkey = o_orderkey\n  AND o_orderdate < DATE '1995-03-15'\n  AND l_shipdate > DATE '1995-03-15'\nGROUP BY l_orderkey, o_orderdate, o_shippriority\nORDER BY revenue DESC, o_orderdate\nLIMIT 10",
+  "created_at": "2026-11-22T07:39:34+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "ca2501fba782ced335c1c38160c639d2593b551c7ee41df611235ae2da100aaa",
+    "detected_patterns": [],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 277.553,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 10,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT l_orderkey, SUM(l_extendedprice * (1 - l_discount)) AS revenue, o_orderdate, o_shippriority FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON l_orderkey = o_orderkey WHERE c_mktsegment = 'BUILDING' AND o_orderdate < '1995-03-15' AND l_shipdate > '1995-03-15' GROUP BY l_orderkey, o_orderdate, o_shippriority ORDER BY revenue DESC, o_orderdate LIMIT 10",
+      "rationale": "Rewritten to use JOIN syntax for better readability and potential optimization.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 10,
+        "candidate_rows": 10,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT l_orderkey, SUM(l_extendedprice * (1 - l_discount)) AS revenue, o_orderdate, o_shippriority FROM customer, orders, lineitem WHERE c_mktsegment = 'BUILDING' AND c_custkey = o_custkey AND l_orderkey = o_orderkey AND o_orderdate < '1995-03-15' AND l_shipdate > '1995-03-15' GROUP BY l_orderkey, o_orderdate, o_shippriority ORDER BY revenue DESC, o_orderdate LIMIT 10",
+      "rationale": "Rewritten to use explicit JOIN conditions for clarity.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 10,
+        "candidate_rows": 10,
+        "order_sensitive": true
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT l_orderkey, SUM(l_extendedprice * (1 - l_discount)) AS revenue, o_orderdate, o_shippriority FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON l_orderkey = o_orderkey WHERE c_mktsegment = 'BUILDING' AND o_orderdate < '1995-03-15' AND l_shipdate > '1995-03-15' GROUP BY l_orderkey, o_orderdate, o_shippriority ORDER BY revenue DESC, o_orderdate LIMIT 10",
+      "rationale": "Rewritten to use explicit JOIN conditions for clarity.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT l_orderkey, SUM(l_extendedprice * (1 - l_discount)) AS revenue, o_orderdate, o_shippriority FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON l_orderkey = o_orderkey WHERE c_mktsegment = 'BUILDING' AND o_orderdate < '1995-03-15' AND l_shipdate > '1995-03-15' GROUP BY l_orderkey, o_orderdate, o_shippriority ORDER BY revenue DESC, o_orderdate LIMIT 10",
+      "rationale": "Rewritten to use explicit JOIN conditions for clarity.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT l_orderkey, SUM(l_extendedprice * (1 - l_discount)) AS revenue, o_orderdate, o_shippriority FROM customer JOIN orders ON c_custkey = o_custkey JOIN lineitem ON l_orderkey = o_orderkey WHERE c_mktsegment = 'BUILDING' AND o_orderdate < '1995-03-15' AND l_shipdate > '1995-03-15' GROUP BY l_orderkey, o_orderdate, o_shippriority ORDER BY revenue DESC, o_orderdate LIMIT 10",
+      "rationale": "Rewritten to use explicit JOIN conditions for clarity.",
+      "status": "duplicate",
+      "duplicate_of": "c1",
+      "check": null
+    }
+  ]
+}

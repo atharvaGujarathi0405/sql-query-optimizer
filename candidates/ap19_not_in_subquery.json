@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "query_id": "ap19_not_in_subquery",
+  "dataset": "tpch",
+  "original_sql": "SELECT c_custkey, c_name\nFROM customer\nWHERE c_custkey NOT IN (SELECT o_custkey FROM orders)",
+  "created_at": "2026-11-22T07:13:56+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "3a10d293e1c4a196888f0ba3cdd30d8b5b2ff782af2ed9477b9562fc59648d64",
+    "detected_patterns": [
+      "not-in"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 134.877,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 50004,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT c_custkey, c_name FROM customer WHERE NOT EXISTS (SELECT 1 FROM orders WHERE orders.o_custkey = customer.c_custkey)",
+      "rationale": "NOT EXISTS is generally faster than NOT IN for NULL-sensitive queries.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 50004,
+        "candidate_rows": 50004,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT c_custkey, c_name FROM customer WHERE c_custkey NOT IN (SELECT o_custkey FROM orders WHERE o_orderstatus = 'O')",
+      "rationale": "Filtering the subquery on o_orderstatus can reduce the number of rows processed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "50004 vs 50379 rows",
+        "original_rows": 50004,
+        "candidate_rows": 50379,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT c_custkey, c_name FROM customer WHERE c_custkey NOT IN (SELECT o_custkey FROM orders WHERE o_orderdate > '1995-01-01')",
+      "rationale": "Filtering the subquery on o_orderdate can reduce the number of rows processed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "50004 vs 50194 rows",
+        "original_rows": 50004,
+        "candidate_rows": 50194,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT c_custkey, c_name FROM customer WHERE c_custkey NOT IN (SELECT o_custkey FROM orders WHERE o_totalprice > 100000)",
+      "rationale": "Filtering the subquery on o_totalprice can reduce the number of rows processed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "50004 vs 50056 rows",
+        "original_rows": 50004,
+        "candidate_rows": 50056,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT c_custkey, c_name FROM customer WHERE c_custkey NOT IN (SELECT o_custkey FROM orders WHERE o_orderpriority = '1-URGENT')",
+      "rationale": "Filtering the subquery on o_orderpriority can reduce the number of rows processed.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "50004 vs 57667 rows",
+        "original_rows": 50004,
+        "candidate_rows": 57667,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

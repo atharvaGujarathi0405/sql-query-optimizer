@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "query_id": "ap01_select_star",
+  "dataset": "sakila",
+  "original_sql": "SELECT *\nFROM rental r\nJOIN customer c ON c.customer_id = r.customer_id\nJOIN inventory i ON i.inventory_id = r.inventory_id\nWHERE c.last_name = 'SMITH'",
+  "created_at": "2026-11-22T06:52:04+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "fe55b02314eab487cff44a8a95c5f19f976e1220b0c561141cd79ee1515145d9",
+    "detected_patterns": [
+      "select-star"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 474.84,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 32,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT r.rental_id, r.rental_date, r.inventory_id, r.customer_id, r.return_date, r.staff_id, r.last_update, c.store_id, c.first_name, c.last_name, c.email, c.address_id, c.active, c.create_date, c.last_update, i.film_id, i.store_id, i.last_update FROM rental r JOIN customer c ON c.customer_id = r.customer_id JOIN inventory i ON i.inventory_id = r.inventory_id WHERE c.last_name = 'SMITH'",
+      "rationale": "This candidate uses a more specific SELECT clause to avoid returning unnecessary columns.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "col_count_mismatch",
+        "detail": "20 vs 18 columns",
+        "original_rows": 32,
+        "candidate_rows": 32,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT r.rental_id, r.rental_date, r.inventory_id, r.customer_id, r.return_date, r.staff_id, r.last_update, c.store_id, c.first_name, c.last_name, c.email, c.address_id, c.active, c.create_date, c.last_update, i.film_id, i.store_id, i.last_update FROM rental r JOIN customer c ON c.customer_id = r.customer_id JOIN inventory i ON i.inventory_id = r.inventory_id WHERE c.last_name = 'SMITH' AND c.active = 1",
+      "rationale": "This candidate adds a condition to filter only active customers.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "col_count_mismatch",
+        "detail": "20 vs 18 columns",
+        "original_rows": 32,
+        "candidate_rows": 32,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT r.rental_id, r.rental_date, r.inventory_id, r.customer_id, r.return_date, r.staff_id, r.last_update, c.store_id, c.first_name, c.last_name, c.email, c.address_id, c.active, c.create_date, c.last_update, i.film_id, i.store_id, i.last_update FROM rental r JOIN customer c ON c.customer_id = r.customer_id JOIN inventory i ON i.inventory_id = r.inventory_id WHERE c.last_name = 'SMITH' AND c.store_id = 1",
+      "rationale": "This candidate adds a condition to filter by a specific store ID.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "col_count_mismatch",
+        "detail": "20 vs 18 columns",
+        "original_rows": 32,
+        "candidate_rows": 32,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT r.rental_id, r.rental_date, r.inventory_id, r.customer_id, r.return_date, r.staff_id, r.last_update, c.store_id, c.first_name, c.last_name, c.email, c.address_id, c.active, c.create_date, c.last_update, i.film_id, i.store_id, i.last_update FROM rental r JOIN customer c ON c.customer_id = r.customer_id JOIN inventory i ON i.inventory_id = r.inventory_id WHERE c.last_name = 'SMITH' AND r.rental_date BETWEEN '2020-01-01 00:00:00' AND '2020-12-31 23:59:59'",
+      "rationale": "This candidate adds a condition to filter by a specific rental date range.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "col_count_mismatch",
+        "detail": "20 vs 18 columns",
+        "original_rows": 32,
+        "candidate_rows": 0,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT r.rental_id, r.rental_date, r.inventory_id, r.customer_id, r.return_date, r.staff_id, r.last_update, c.store_id, c.first_name, c.last_name, c.email, c.address_id, c.active, c.create_date, c.last_update, i.film_id, i.store_id, i.last_update FROM rental r JOIN customer c ON c.customer_id = r.customer_id JOIN inventory i ON i.inventory_id = r.inventory_id WHERE c.last_name = 'SMITH' AND c.address_id IN (SELECT address_id FROM address WHERE city = 'Los Angeles')",
+      "rationale": "This candidate adds a condition to filter by a specific city.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "exec_error",
+        "detail": "1054 (42S22): Unknown column 'city' in 'where clause'",
+        "original_rows": 32,
+        "candidate_rows": null,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

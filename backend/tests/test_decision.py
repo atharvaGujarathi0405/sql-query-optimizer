@@ -108,3 +108,28 @@ def test_measured_variant_finds_the_faster_candidate_on_ap18_and_q18():
 def test_noise_guard_still_protects_the_measured_variant():
     # ap17: c1 is SLOWER; with the guard the original stays, whichever criteria are used
     assert or_decision(AP17, variant="measured")["winner"] == "original"
+
+
+# --- declared arm "3-argmin": fastest measured runtime + the same noise guard (no AHP/TOPSIS)
+from app.optimizer.decision import runtime_argmin_decision  # noqa: E402
+
+
+def test_argmin_picks_the_fastest_and_guard_applies():
+    d = runtime_argmin_decision([ORIG, alt("c0", 600.0, 5.0), BIG_WIN], noise_k=1.0)
+    assert d["ranking"] == ["c1", "c0", "original"] and d["winner"] == "c1"
+    # a 36 ms gain does not clear the original's 41 ms IQR; a 100 ms gain clears 20 ms
+    assert runtime_argmin_decision([alt("original", 453.0, 41.0), alt("c1", 417.0, 25.0)], noise_k=1.0)["winner"] == "original"
+    assert runtime_argmin_decision([alt("original", 500.0, 20.0), alt("c1", 400.0, 10.0)], noise_k=1.0)["winner"] == "c1"
+
+
+def test_argmin_ignores_estimates_that_mislead_topsis():
+    # the dev-003 ap18 situation: the faster candidate has a far worse EXPLAIN cost
+    o, c = alt("original", 600.0, 5.0, cost=15_304.0), alt("c3", 400.0, 5.0, cost=536_529.0)
+    assert runtime_argmin_decision([o, c])["winner"] == "c3"
+
+
+def test_argmin_ties_go_to_the_original_and_failures_are_excluded():
+    assert runtime_argmin_decision([alt("original", 10.0, 1.0), alt("c1", 10.0, 1.0)], noise_k=0)["winner"] == "original"
+    d = runtime_argmin_decision([ORIG, alt("c1", 0, 0, outcome="timeout")])
+    assert d["winner"] == "original" and d["excluded"] == {"c1": "timeout"}
+    assert runtime_argmin_decision([alt("original", 0, 0, outcome="error")])["winner"] is None

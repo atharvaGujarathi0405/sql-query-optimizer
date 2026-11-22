@@ -612,3 +612,17 @@ Full text: docs/threats_to_validity.md, items 1-30. Headlines:
   C  Phase 4 Workload Advisor   D  Phase 5 Scale Simulator   E  finish UI + verify in a browser + Bruno
   F  write-up (disclose ap08/ap19/ap02 seen in Phase 2; candidates_groq/ap08 is a 0-byte file)
   Not verified: UI rendering, Bruno collection, buffer-pool residency.
+
+
+--------------------------------------------------------------------------------
+18. UPDATE 2026-11-22 (step B, partial): FREEZE PREPARED, TEST RUN NOT YET DONE
+--------------------------------------------------------------------------------
+  Done: arm 3-argmin (fastest measured runtime + same guard) declared in config/run.yaml and wired into runner
+  and report (picks identical to arm 3 on 15/15 dev queries, post-hoc); report gained a per-category table and
+  seeded bootstrap CIs; scripts/check_residency.py (40/40 warm passes with 0 pool misses); 23 of 25 test pools
+  generated with Ollama (tpch_q14, tpch_q17 skipped by decision; threats 42-44). 208 tests pass.
+  Not done: the ONE test run. Reason: only ~1.8 GiB RAM was free (the earlier pool job was stopped by the
+  harness for low memory); a multi-hour one-shot run should not start in that state. Free memory first.
+  Run: cd backend; OLLAMA_HOST must point at an Ollama server that serves qwen2.5-coder:7b (the tray instance on
+  :11434 has no models; start one with OLLAMA_MODELS=<repo>/ollama_models). Then
+  python -m app.eval.runner --run-id test-001 --provider ollama --split test --allow-test   (clean tree only)

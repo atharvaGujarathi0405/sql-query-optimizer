@@ -187,3 +187,11 @@ def test_an_unreachable_provider_is_a_separate_failure_kind_with_the_same_scorin
     recs = records(path)
     assert {r["kind"] for r in recs if r["type"] == "failure"} == {"llm_unreachable"}
     assert all(a["pick"] == "original" and a["fallback"] for a in recs if a["type"] == "arm" and a["arm"] in ("2a", "2b"))
+
+
+def test_bootstrap_ci_is_seeded_and_brackets_the_mean():
+    from app.eval.report import bootstrap_ci
+    d = [-0.5, -0.4, -0.6, -0.45, -0.55]
+    lo, hi = bootstrap_ci(d)
+    assert (lo, hi) == bootstrap_ci(d) and lo <= sum(d) / len(d) <= hi and hi < 0
+    assert bootstrap_ci([0.0, 0.0, 0.0]) == (0.0, 0.0) and bootstrap_ci([0.1]) is None

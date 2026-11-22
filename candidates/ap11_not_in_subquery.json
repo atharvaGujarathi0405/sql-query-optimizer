@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "query_id": "ap11_not_in_subquery",
+  "dataset": "employees",
+  "original_sql": "SELECT e.emp_no, e.first_name, e.last_name\nFROM employees e\nWHERE e.emp_no NOT IN (SELECT dm.emp_no FROM dept_manager dm)\n  AND e.hire_date >= '1999-06-01'",
+  "created_at": "2026-11-22T07:09:21+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "76bc91717ce7d4f35b54e1384d482fb859342ff7600e09a033ceddab953a1d57",
+    "detected_patterns": [
+      "not-in"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 136.549,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 602,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT e.emp_no, e.first_name, e.last_name FROM employees e LEFT JOIN dept_manager dm ON e.emp_no = dm.emp_no WHERE dm.emp_no IS NULL AND e.hire_date >= '1999-06-01'",
+      "rationale": "Converts NOT IN to a LEFT JOIN and checks for NULL, which can be faster than NOT IN.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 602,
+        "candidate_rows": 602,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT e.emp_no, e.first_name, e.last_name FROM employees e WHERE NOT EXISTS (SELECT 1 FROM dept_manager dm WHERE dm.emp_no = e.emp_no) AND e.hire_date >= '1999-06-01'",
+      "rationale": "Replaces NOT IN with NOT EXISTS, which is generally faster and more readable.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 602,
+        "candidate_rows": 602,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT e.emp_no, e.first_name, e.last_name FROM employees e WHERE e.emp_no NOT IN (SELECT emp_no FROM dept_manager) AND e.hire_date >= '1999-06-01'",
+      "rationale": "Simplifies the subquery by removing the correlation, which might help the optimizer.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 602,
+        "candidate_rows": 602,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT e.emp_no, e.first_name, e.last_name FROM employees e WHERE e.emp_no NOT IN (SELECT emp_no FROM dept_manager WHERE dept_no = 'D001') AND e.hire_date >= '1999-06-01'",
+      "rationale": "Adds a condition to the subquery that might help the optimizer use an index on dept_no.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 602,
+        "candidate_rows": 602,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT e.emp_no, e.first_name, e.last_name FROM employees e WHERE e.emp_no NOT IN (SELECT emp_no FROM dept_manager WHERE dept_no = 'D002') AND e.hire_date >= '1999-06-01'",
+      "rationale": "Adds another condition to the subquery to further guide the optimizer.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 602,
+        "candidate_rows": 602,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

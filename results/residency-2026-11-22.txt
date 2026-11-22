@@ -1,0 +1,43 @@
+id                                     warm-pass pool misses
+ap01_select_star                                           0
+ap02_function_on_indexed_column                            0
+ap03_correlated_subquery                                   0
+ap04_not_in_subquery                                       0
+ap05_leading_wildcard_like                                 0
+ap06_or_across_columns                                     0
+ap07_implicit_cast                                         0
+ap08_arithmetic_on_indexed_column                          0
+ap09_select_star_join                                      0
+ap10_correlated_max_subquery                               0
+ap11_not_in_subquery                                       0
+ap12_or_across_columns                                     0
+ap13_leading_wildcard_like                                 0
+ap14_redundant_distinct                                    0
+ap15_having_instead_of_where                               0
+ap16_deep_offset_pagination                                0
+ap17_function_on_column                                    0
+ap18_correlated_count_subquery                             0
+ap19_not_in_subquery                                       0
+ap20_or_across_columns                                     0
+ap21_scalar_subquery_in_select                             0
+ap22_union_instead_of_union_all                            0
+emp_avg_salary_by_dept                                     0
+emp_current_managers                                       0
+emp_titles_count                                           0
+emp_top_paid_current                                       0
+sak_busiest_actors                                         0
+sak_films_per_category                                     0
+sak_rentals_per_store_month                                0
+sak_top_customers                                          0
+tpch_q01                                                   0
+tpch_q03                                                   0
+tpch_q04                                                   0
+tpch_q05                                                   0
+tpch_q06                                                   0
+tpch_q10                                                   0
+tpch_q12                                                   0
+tpch_q14                                                   0
+tpch_q17                                                   0
+tpch_q18                                                   0
+
+40 of 40 queries ran their warm pass with <= 100 pool misses.

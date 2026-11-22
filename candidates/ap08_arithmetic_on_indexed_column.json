@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "query_id": "ap08_arithmetic_on_indexed_column",
+  "dataset": "employees",
+  "original_sql": "SELECT emp_no, salary, from_date\nFROM salaries\nWHERE emp_no - 1 = 10000",
+  "created_at": "2026-11-22T07:02:03+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "55ffa2463a4c5bbbdc29d849fa715a757ca8921cf7c3f4d34181d6b33d90a2e7",
+    "detected_patterns": [
+      "function-on-column"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 88.025,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 17,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT emp_no, salary, from_date FROM salaries WHERE emp_no = 10001",
+      "rationale": "Simplifies the comparison by removing the function from the column.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 17,
+        "candidate_rows": 17,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT emp_no, salary, from_date FROM salaries WHERE emp_no = 10001 ORDER BY emp_no",
+      "rationale": "Adds an ORDER BY clause to ensure the same result set order as the original query.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 17,
+        "candidate_rows": 17,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT emp_no, salary, from_date FROM salaries WHERE emp_no = 10001 LIMIT 1",
+      "rationale": "Limits the result set to one row to avoid unnecessary data retrieval.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "17 vs 1 rows",
+        "original_rows": 17,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT emp_no, salary, from_date FROM salaries WHERE emp_no = 10001 AND salary > 0",
+      "rationale": "Adds a condition to filter out rows with zero salary, assuming that's not desired.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 17,
+        "candidate_rows": 17,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT emp_no, salary, from_date FROM salaries WHERE emp_no = 10001 AND from_date = '1980-01-01'",
+      "rationale": "Adds a condition to filter out rows with a specific from_date, assuming that's not desired.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "17 vs 0 rows",
+        "original_rows": 17,
+        "candidate_rows": 0,
+        "order_sensitive": false
+      }
+    }
+  ]
+}

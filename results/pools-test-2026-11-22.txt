@@ -1,0 +1,24 @@
+query                                      source proposed valid  statuses / error
+ap01_select_star                              new        5     0  invalid:col_count_mismatch, invalid:col_count_mismatch, invalid:col_count_mismatch, invalid:col_count_mismatch, invalid:exec_error
+ap02_function_on_indexed_column               new        5     5  valid, valid, valid, valid, valid
+ap04_not_in_subquery                          new        5     3  valid, valid, valid, invalid:row_count_mismatch, invalid:row_count_mismatch
+ap06_or_across_columns                        new        5     5  valid, valid, valid, valid, valid
+ap07_implicit_cast                            new        5     5  valid, valid, valid, valid, valid
+ap08_arithmetic_on_indexed_column             new        5     3  valid, valid, invalid:row_count_mismatch, valid, invalid:row_count_mismatch
+ap09_select_star_join                         new        5     0  invalid:col_count_mismatch, invalid:col_count_mismatch, invalid:col_count_mismatch, invalid:col_count_mismatch, invalid:col_count_mismatch
+ap10_correlated_max_subquery                  new        5     2  valid, valid, invalid:row_count_mismatch, invalid:row_count_mismatch, invalid:row_count_mismatch
+ap11_not_in_subquery                          new        5     5  valid, valid, valid, valid, valid
+ap14_redundant_distinct                       new        5     1  valid, invalid:row_count_mismatch, invalid:row_count_mismatch, invalid:row_count_mismatch, invalid:row_count_mismatch
+ap19_not_in_subquery                          new        5     1  valid, invalid:row_count_mismatch, invalid:row_count_mismatch, invalid:row_count_mismatch, invalid:row_count_mismatch
+ap20_or_across_columns                        new        5     4  valid, invalid:row_count_mismatch, valid, valid, valid
+ap22_union_instead_of_union_all               new        5     3  valid, valid, valid, invalid:row_count_mismatch, invalid:row_count_mismatch
+emp_avg_salary_by_dept                        new        5     0  duplicate, duplicate, duplicate, duplicate, duplicate
+emp_titles_count                              new        1     0  duplicate
+emp_top_paid_current                          new        5     1  duplicate, valid, duplicate, duplicate, duplicate
+sak_busiest_actors                            new        5     0  duplicate, invalid:rows_mismatch, duplicate, duplicate, duplicate
+sak_films_per_category                        new        5     4  valid, valid, invalid:row_count_mismatch, valid, valid
+tpch_q01                                      new        5     2  valid, valid, duplicate, duplicate, duplicate
+tpch_q03                                      new        5     2  valid, valid, duplicate, duplicate, duplicate
+tpch_q04                                      new        5     5  valid, valid, valid, valid, valid
+tpch_q06                                      new        5     2  valid, valid, duplicate, duplicate, duplicate
+tpch_q12                                      new        5     4  valid, valid, valid, valid, invalid:rows_mismatch

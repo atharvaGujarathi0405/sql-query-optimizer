@@ -33,7 +33,7 @@ from app.eval.runinfo import run_metadata
 from app.llm.client import LLMClient
 from app.optimizer.analysis import schema_text, tables_in
 from app.optimizer.candidates import POOL_DIR, load_pool, pool_path, valid_candidates
-from app.optimizer.decision import NOISE_K, or_decision
+from app.optimizer.decision import NOISE_K, or_decision, runtime_argmin_decision
 from app.optimizer.execution import open_session
 from app.optimizer.metrics import collect
 
@@ -155,8 +155,9 @@ def _run_query(conn, w: Writer, client, provider: str, model: str, q: dict, repe
 
     arm("1", "original", by="baseline")
 
-    d, dm = or_decision(sel_alts), or_decision(sel_alts, variant="measured")
-    for name, pick, dec in (("3", d["winner"], d), ("3-raw", d["winner_raw"], d), ("3-measured", dm["winner"], dm)):
+    d, dm, da = or_decision(sel_alts), or_decision(sel_alts, variant="measured"), runtime_argmin_decision(sel_alts)
+    for name, pick, dec in (("3", d["winner"], d), ("3-raw", d["winner_raw"], d), ("3-measured", dm["winner"], dm),
+                            ("3-argmin", da["winner"], da)):
         if pick is None:
             _fail(w, qid, "or_engine", "no_rankable_alternative", f"excluded: {dec['excluded']}", arm=name)
         arm(name, pick or "original", by="or_engine", failure=None if pick else "no_rankable_alternative",

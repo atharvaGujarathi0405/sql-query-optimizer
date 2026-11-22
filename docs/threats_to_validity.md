@@ -233,6 +233,32 @@ the final list.
     any pick with the Ollama pools, so the a-priori and the post-dev OR variants cannot be told apart on dev. On
     the 12 contested queries OR had 3 wins / 0 losses, 2b 14 wins (query x repeat) / 2 losses, picks identical on
     9 of 15 (Wilcoxon p = 0.0625 for 3 vs 2b, 0.027 for 3 vs 2a). Read as counts and effect sizes; n is small.
-40. **Open item: is the multi-criteria machinery needed at all?** If a runtime-only rule picks the same candidates
-    on test, AHP/TOPSIS adds nothing beyond "fastest measured candidate with a noise guard" (threat 35c). Whether
-    to score an explicit runtime-argmin arm from the same data is decided BEFORE the freeze, not after seeing test.
+40. **Is the multi-criteria machinery needed at all?** Declared before the test run (2026-11-22): arm `3-argmin`
+    (lowest measured median runtime + the same noise guard; `config/run.yaml`, `decision.runtime_argmin_decision`),
+    scored from the same data as every arm. Recomputed post-hoc from dev-006's recorded selection measurements it
+    picks identically to arm 3 on 15 of 15 dev queries. If that holds on test, the finding to report is that
+    AHP/TOPSIS adds nothing beyond "pick the fastest measured candidate". Four OR-side arms (3, 3-measured,
+    3-argmin, 3-raw) against two LLM arms: no multiplicity correction; p-values are descriptive.
+41. **Report statistics are descriptive.** The report now adds a per-category table and a seeded 95% bootstrap CI
+    (10,000 resamples of queries) on each paired mean difference. Resampling 25 test queries (13/7/5 by
+    category, many of them ties) gives wide, fragile intervals; they are shown so that nobody reads more into the
+    p-values than the data supports.
+
+## Test-split pools (generated 2026-11-22, before any test arm was run)
+
+42. **Two test queries have no pool: `tpch_q14` and `tpch_q17`.** Pool generation (Ollama, 5 candidates per query,
+    `results/pools-test-2026-11-22.txt`) was stopped by the harness for low system memory after 23 of 25 pools;
+    the author decided to skip the remaining two rather than wait. The decision was made before any test arm ran
+    and so was not influenced by results. They stay in the test set: the runner logs `pool_missing` and scores
+    them as the original for every arm (rule 9; failure scoring, threat 27). They are ties by construction, so
+    the effective test set has 23 queries that can differ between arms, fewer once the original-only pools
+    (see the report's "real choice" line) are removed. Both are TPC-H queries, so TPC-H standard is under-
+    represented among contested test queries (5 of 7 have pools).
+43. **Many test pools are weak.** `ap01` and `ap09` (SELECT *) have 0 valid candidates: the model rewrites `*` into
+    column lists and the checker rejects the changed column count, as designed. `emp_avg_salary_by_dept`,
+    `emp_titles_count` and `sak_busiest_actors` are all duplicates of the original or invalid. Pools were not
+    re-rolled or prompts changed after seeing them (rule 2; pools are fixed once cached).
+44. **Buffer-pool residency (threat 6) checked:** `scripts/check_residency.py`, all 40 original queries, rule-7
+    protocol run twice each; the second (warm) pass added 0 `Innodb_buffer_pool_reads` for every query
+    (`results/residency-2026-11-22.txt`). This covers each query run alone; the interleaved passes in the runner
+    were not separately checked. Timings still describe a fully cached database, not I/O-bound production.

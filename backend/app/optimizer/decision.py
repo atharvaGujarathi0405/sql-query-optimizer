@@ -50,12 +50,37 @@ def or_decision(alts: list[dict], noise_k: float | None = None, variant: str | N
     out["ranking"] = [rankable[i]["id"] for i in rank(closeness)]
     out["winner_raw"] = out["winner"] = out["ranking"][0]
 
+    out["winner"], out["guard"] = _guard(rankable, out["winner_raw"], k)
+    return out
+
+
+def _guard(rankable: list[dict], raw: str, k: float) -> tuple[str, dict]:
+    """Noise guard: keep the original unless `raw` beats it by more than k x the original's IQR."""
+    guard = {"k": k, "applied": False, "reason": ""}
     orig = next((a for a in rankable if a["id"] == "original"), None)
-    if k > 0 and orig is not None and out["winner_raw"] != "original":
-        win = next(a for a in rankable if a["id"] == out["winner_raw"])
+    if k > 0 and orig is not None and raw != "original":
+        win = next(a for a in rankable if a["id"] == raw)
         gain = orig["metrics"]["runtime_ms_median"] - win["metrics"]["runtime_ms_median"]
         need = k * orig["metrics"]["runtime_ms_iqr"]
         if not gain > need:
-            out["winner"] = "original"
-            out["guard"].update(applied=True, reason=f"runtime gain {gain:.2f} ms <= {k} x original IQR ({need:.2f} ms)")
+            guard.update(applied=True, reason=f"runtime gain {gain:.2f} ms <= {k} x original IQR ({need:.2f} ms)")
+            return "original", guard
+    return raw, guard
+
+
+def runtime_argmin_decision(alts: list[dict], noise_k: float | None = None) -> dict:
+    """Declared arm "3-argmin" (before the test run): no AHP, no TOPSIS. Pick the alternative with the lowest
+    measured median runtime, then apply the SAME noise guard. If this makes the same picks as arms 3 and
+    3-measured, the multi-criteria machinery adds nothing beyond "fastest measured candidate" (threats 35c, 40).
+    Exact runtime ties go to the earlier alternative (the original is first)."""
+    k = NOISE_K if noise_k is None else noise_k
+    rankable = [a for a in alts if a["metrics"]["outcome"] == "ok" and a["metrics"].get("runtime_ms_median") is not None]
+    excluded = {a["id"]: a["metrics"]["outcome"] for a in alts if a not in rankable}
+    out = {"criteria": ["runtime_ms"], "excluded": excluded, "closeness": {}, "ranking": [], "winner_raw": None,
+           "winner": None, "guard": {"k": k, "applied": False, "reason": ""}}
+    if not rankable:
+        return out
+    out["ranking"] = [a["id"] for a in sorted(rankable, key=lambda a: a["metrics"]["runtime_ms_median"])]  # stable
+    out["winner_raw"] = out["ranking"][0]
+    out["winner"], out["guard"] = _guard(rankable, out["winner_raw"], k)
     return out

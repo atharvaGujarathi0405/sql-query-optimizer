@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "query_id": "ap14_redundant_distinct",
+  "dataset": "employees",
+  "original_sql": "SELECT DISTINCT e.emp_no, e.last_name\nFROM employees e\nJOIN dept_emp de ON de.emp_no = e.emp_no\nWHERE de.dept_no = 'd009'",
+  "created_at": "2026-11-22T07:11:25+00:00",
+  "generator": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.0,
+    "seed": 42,
+    "prompt_sha256": "cd408124357d78f8e1002abae8d37cfec50557960dac1df21859c1b09756a893",
+    "detected_patterns": [
+      "distinct"
+    ],
+    "llm_attempts": [
+      {
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+        "ok": true,
+        "latency_s": 121.823,
+        "error": ""
+      }
+    ]
+  },
+  "original_check": {
+    "ok": true,
+    "rows": 23580,
+    "error": ""
+  },
+  "n_proposed": 5,
+  "n_truncated": 0,
+  "candidates": [
+    {
+      "id": "c1",
+      "sql": "SELECT e.emp_no, e.last_name FROM employees e JOIN dept_emp de ON de.emp_no = e.emp_no WHERE de.dept_no = 'd009'",
+      "rationale": "The original query is already optimized for this specific case, so no rewrite is necessary.",
+      "status": "valid",
+      "check": {
+        "valid": true,
+        "reason": "ok",
+        "detail": "",
+        "original_rows": 23580,
+        "candidate_rows": 23580,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c2",
+      "sql": "SELECT e.emp_no, e.last_name FROM employees e JOIN dept_emp de ON de.emp_no = e.emp_no WHERE de.dept_no = 'd009' AND e.gender = 'M'",
+      "rationale": "If gender is a common filter, adding it to the WHERE clause can help the query optimizer choose a more efficient execution plan.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23580 vs 14132 rows",
+        "original_rows": 23580,
+        "candidate_rows": 14132,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c3",
+      "sql": "SELECT e.emp_no, e.last_name FROM employees e JOIN dept_emp de ON de.emp_no = e.emp_no WHERE de.dept_no = 'd009' AND e.hire_date > '2000-01-01'",
+      "rationale": "If hire date is a common filter, adding it to the WHERE clause can help the query optimizer choose a more efficient execution plan.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23580 vs 1 rows",
+        "original_rows": 23580,
+        "candidate_rows": 1,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c4",
+      "sql": "SELECT e.emp_no, e.last_name FROM employees e JOIN dept_emp de ON de.emp_no = e.emp_no WHERE de.dept_no = 'd009' AND e.last_name LIKE 'S%'",
+      "rationale": "If last name is a common filter, adding it to the WHERE clause can help the query optimizer choose a more efficient execution plan.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23580 vs 2745 rows",
+        "original_rows": 23580,
+        "candidate_rows": 2745,
+        "order_sensitive": false
+      }
+    },
+    {
+      "id": "c5",
+      "sql": "SELECT e.emp_no, e.last_name FROM employees e JOIN dept_emp de ON de.emp_no = e.emp_no WHERE de.dept_no = 'd009' AND e.gender = 'M' AND e.hire_date > '2000-01-01'",
+      "rationale": "Combining multiple common filters can help the query optimizer choose a more efficient execution plan.",
+      "status": "invalid",
+      "check": {
+        "valid": false,
+        "reason": "row_count_mismatch",
+        "detail": "23580 vs 0 rows",
+        "original_rows": 23580,
+        "candidate_rows": 0,
+        "order_sensitive": false
+      }
+    }
+  ]
+}
