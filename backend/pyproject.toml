@@ -8,7 +8,7 @@ dependencies = [
     "python-dotenv",
     "mysql-connector-python",
     "sqlglot",
-    "pulp",
+    "pulp>=3,<4",  # 4.x no longer bundles the CBC binary the stack calls for (4.x: pulp[cbc] + COIN_CMD)
     "simpy",
     "numpy",
     "scipy",  # Wilcoxon signed-rank test: exact small-sample p-values are not in NumPy and are easy to get wrong by hand

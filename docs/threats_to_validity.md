@@ -271,3 +271,61 @@ the final list.
     and unexcluded; no outcome in it was read before the decision to rerun the whole split from scratch under a
     new id (same precedent as dev-002, dev-004, dev-005). Partial results are not merged into the rerun. The
     rerun uses the same frozen commit's code, config, pools and split, so the freeze is unchanged.
+
+## Workload Advisor (Phase 4, written 2026-11-22)
+
+The advisor (`backend/app/advisor/`, `GET/POST /advisor/*`) is **separate from the OR-vs-LLM thesis**: it compares an ILP
+(PuLP + CBC) with a greedy heuristic on identical measured inputs. There is no LLM arm; adding one is a design decision
+for the author (it would need its own pool, prompt and repeats). Nothing here feeds the frozen evaluation.
+
+46. **Scope and fairness of the advisor comparison.** Workload = the dev-split queries of one dataset (sakila 4,
+    employees 5, TPC-H 6 queries); the test split is refused by `dev_workload()` and the API (422), because index
+    experiments would reveal test-split timings (rule 5). ILP and greedy get the same candidates, the same measured
+    gains and penalties, the same storage budget and index cap, and both selections are then validated by creating the
+    whole set and re-measuring the workload. With 4-6 queries the two selectors usually agree; their gap is shown only
+    by the known-answer unit test (a knapsack trap), not by the measured workloads.
+47. **The experiments change the shared database.** CREATE/DROP INDEX is done as `admin`; every index is named `adv_*`,
+    dropped in a `finally`, and any leftover is swept at the start and end of a run. But `ANALYZE TABLE` after each
+    change **re-samples InnoDB's persistent statistics** for the touched tables, so optimizer estimates (and in
+    borderline cases plans) can differ from what dev-001..dev-006 and the pools saw. Tables touched on 2026-11-22:
+    sakila `inventory`, `payment`, `customer`; employees `departments`, `dept_emp`, `dept_manager`, `salaries`; TPC-H
+    `orders`, `customer`, `lineitem`, `nation`, `region`. All arms of a single evaluation run still see identical
+    state, so within-run fairness holds, but **do not run the advisor between or during evaluation runs**; the clean
+    order is: frozen test run first. (Advisor experiments also load the server: never run one during a timed run.)
+48. **Incident: an experiment altered the schema (found by the first real run, repaired).** In the first design the
+    candidate index was created visible. On `employees.dept_emp`, `CREATE INDEX (dept_no, from_date)` made MySQL
+    silently drop the table's implicit foreign-key index `dept_no`; the FK then depended on the experimental index and
+    `DROP INDEX` was refused (error 1553), leaving `adv_*` behind. The original index was recreated by hand as `KEY
+    dept_no (dept_no)` (identical to its sibling `dept_manager`), the leftover dropped, and all 36 foreign keys checked
+    for a backing index. This was on 2026-11-22 shortly after 16:08 local time, with no evaluation run active; no
+    other table was affected (sakila `payment`'s explicit FK indexes survived). Fixes: (a) `indexes_created` checks the
+    table's other indexes right after creating and, if any vanished, restores them first (which frees the FK), cleans
+    up and fails that candidate loudly (it is logged, never measured: the "without" condition would lack an index);
+    (b) the same check runs at exit. Creating the index INVISIBLE does **not** reliably prevent the absorption: the
+    `dept_emp` candidate was not absorbed that way, but in the TPC-H run `customer(c_nationkey, c_custkey)` and
+    `orders(o_custkey, o_orderkey)` each dropped an implicit FK index even when invisible, and were caught and
+    restored by the guard (see that run's `failures`). So candidates that extend an implicit FK index are expected to
+    fail, which means the advisor cannot evaluate them. A scratch-table test reproduces the absorption.
+    Residual risk: a lost PRIMARY/UNIQUE index is reported but cannot be rebuilt.
+49. **Measurement noise dominated the first designs.** Same unchanged query, three designs: (1) one baseline at the
+    start: a no-op index showed a 153 ms "gain" (the machine drifted 3-18% during the run); (2) a baseline re-measured
+    just before each index: at TPC-H scale one unchanged query still read 2425, 1747 and 1341 ms in three passes, and
+    the ILP's pick "regressed" four queries that had looked 9-13% faster minutes earlier (predicted +493 ms, measured
+    -305 ms); (3) pooled IQR across rounds was too strict and hid a real 55% gain (`dept_emp(from_date)`). The final
+    design: create the index once INVISIBLE and alternate hidden/shown in ABBA rounds (`rounds` = 2), so both
+    conditions see the same data, statistics and drift; an effect counts only if **every round** shows it in the same
+    direction by more than `min_gain_pct` = 15% of that round's baseline (`effect_ms`). The 15% and the round count
+    are judgements made from the advisor's own drift observations, not from any evaluation result. Two rounds is the
+    minimum that can test consistency; it is not a significance test.
+50. **Regressions are charged.** An index that slows another workload query beyond the same rule is penalised by the
+    summed slowdown (conservative: it ignores that the optimizer might not use the index there). Only measured
+    regressions are charged; a regression that happens only in combination with other indexes shows up as the gap
+    between predicted and measured gain in the validation.
+51. **Index size is the server's estimate.** `information_schema.tables.index_length` after `ANALYZE TABLE` (sampled
+    statistics). Twice a fresh index read as 0 MB (stale statistics); `new_index_mb` retries and fails the candidate
+    instead of budgeting it at zero. Budgets are therefore approximate.
+52. **What is not modelled.** Write amplification and storage cost of keeping an index, queries outside the workload,
+    and index interactions beyond what the combined validation measures. Candidates come from a heuristic parse
+    (SQLGlot; one alias map per statement) and are capped at 10 per run, so the ILP optimises over that pool only; it
+    does not prove an index outside the pool is worse. CBC is used through PuLP 3.x (`pulp>=3,<4`) because PuLP 4.x no
+    longer bundles the CBC binary.

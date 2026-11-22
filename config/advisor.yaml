@@ -1,0 +1,15 @@
+# Workload Advisor (Phase 4) settings. Deliberately NOT in config/run.yaml: that file (and ahp.yaml) is hashed
+# into every evaluation run's metadata and frozen (tag freeze-v1). The timing protocol (warm-up, timed runs) and
+# the tie band are READ from run.yaml so index experiments are measured exactly like every other arm.
+max_candidates: 10      # candidate indexes tried per workload (each one is a real CREATE INDEX + measurement)
+max_index_columns: 3    # widest composite candidate
+default_budget_mb: 64   # storage budget for the chosen set (measured index size, not an estimate)
+default_max_indexes: 4  # cap on how many indexes the advisor may recommend
+# A benefit counts only if it exceeds this share of the paired baseline (and the IQRs, and run.yaml's tie band).
+# Chosen from the advisor's own drift check on the sakila dev workload (2026-11-22): the same unchanged query
+# measured 4-18% apart between passes (up to 37% on a 2 ms query), so the 5% tie band alone counted noise as gain.
+min_gain_pct: 15
+# Alternating rounds per measurement (ABBA...): the candidate is created once, INVISIBLE, and toggled VISIBLE/INVISIBLE
+# between rounds, so "without" and "with" are measured on the same data, statistics and machine state. Added after the
+# first TPC-H run, where one unchanged query read 2425, 1747 and 1341 ms in three passes minutes apart.
+rounds: 2

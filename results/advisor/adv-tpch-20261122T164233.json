@@ -1,0 +1,912 @@
+{
+ "id": "adv-tpch-20261122T164233",
+ "dataset": "tpch",
+ "started": "2026-11-22T16:42:33.095155+00:00",
+ "finished": "2026-11-22T17:17:48.683252+00:00",
+ "mysql": "8.4.13",
+ "budget_mb": 64,
+ "max_indexes": 4,
+ "protocol": {
+  "warmup_runs": 2,
+  "timed_runs": 5,
+  "query_timeout_s": 120,
+  "min_gain_pct": 15,
+  "rounds": 2
+ },
+ "baseline": {
+  "ap17_function_on_column": {
+   "ms": 688.557,
+   "iqr": 26.041,
+   "outcome": "ok"
+  },
+  "ap18_correlated_count_subquery": {
+   "ms": 790.319,
+   "iqr": 64.46,
+   "outcome": "ok"
+  },
+  "ap21_scalar_subquery_in_select": {
+   "ms": 48.886,
+   "iqr": 4.067,
+   "outcome": "ok"
+  },
+  "tpch_q05": {
+   "ms": 1786.33,
+   "iqr": 123.879,
+   "outcome": "ok"
+  },
+  "tpch_q10": {
+   "ms": 2359.297,
+   "iqr": 197.457,
+   "outcome": "ok"
+  },
+  "tpch_q18": {
+   "ms": 3640.01,
+   "iqr": 81.576,
+   "outcome": "ok"
+  }
+ },
+ "candidates": [
+  {
+   "table": "customer",
+   "cols": [
+    "c_nationkey",
+    "c_custkey"
+   ],
+   "wanted_by": [
+    "ap21_scalar_subquery_in_select",
+    "tpch_q05",
+    "tpch_q10"
+   ],
+   "error": "customer(c_nationkey, c_custkey): CleanupError: creating the index dropped existing index(es) [('customer', 'c_nationkey')]; candidate not measured",
+   "id": "adv_63a55b8fb6"
+  },
+  {
+   "table": "orders",
+   "cols": [
+    "o_orderdate"
+   ],
+   "wanted_by": [
+    "tpch_q05",
+    "tpch_q10",
+    "tpch_q18"
+   ],
+   "size_mb": 21.547,
+   "benefit_ms": {
+    "ap17_function_on_column": 0.0,
+    "ap18_correlated_count_subquery": 0.0,
+    "ap21_scalar_subquery_in_select": 0.0,
+    "tpch_q05": 0.0,
+    "tpch_q10": 365.77,
+    "tpch_q18": 0.0
+   },
+   "regression_ms": {
+    "ap17_function_on_column": 0.0,
+    "ap18_correlated_count_subquery": 0.0,
+    "ap21_scalar_subquery_in_select": 0.0,
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "paired_base_ms": {
+    "ap17_function_on_column": 606.135,
+    "ap18_correlated_count_subquery": 752.529,
+    "ap21_scalar_subquery_in_select": 53.622,
+    "tpch_q05": 1575.185,
+    "tpch_q10": 1930.087,
+    "tpch_q18": 3476.179
+   },
+   "with_index": {
+    "ap17_function_on_column": 656.144,
+    "ap18_correlated_count_subquery": 730.822,
+    "ap21_scalar_subquery_in_select": 48.17,
+    "tpch_q05": 1577.786,
+    "tpch_q10": 1564.313,
+    "tpch_q18": 3773.121
+   },
+   "rounds_ms": {
+    "ap17_function_on_column": {
+     "without": [
+      603.497,
+      608.773
+     ],
+     "with": [
+      600.661,
+      711.627
+     ]
+    },
+    "ap18_correlated_count_subquery": {
+     "without": [
+      751.612,
+      753.445
+     ],
+     "with": [
+      695.676,
+      765.967
+     ]
+    },
+    "ap21_scalar_subquery_in_select": {
+     "without": [
+      53.832,
+      53.412
+     ],
+     "with": [
+      46.484,
+      49.856
+     ]
+    },
+    "tpch_q05": {
+     "without": [
+      1567.706,
+      1582.664
+     ],
+     "with": [
+      1533.447,
+      1622.125
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      1964.886,
+      1895.288
+     ],
+     "with": [
+      1627.407,
+      1501.219
+     ]
+    },
+    "tpch_q18": {
+     "without": [
+      3660.406,
+      3291.952
+     ],
+     "with": [
+      4191.057,
+      3355.185
+     ]
+    }
+   },
+   "id": "adv_8b20f53ab3"
+  },
+  {
+   "table": "orders",
+   "cols": [
+    "o_custkey",
+    "o_orderkey"
+   ],
+   "wanted_by": [
+    "tpch_q05",
+    "tpch_q10"
+   ],
+   "error": "orders(o_custkey, o_orderkey): CleanupError: creating the index dropped existing index(es) [('orders', 'o_custkey')]; candidate not measured",
+   "id": "adv_3138a449a6"
+  },
+  {
+   "table": "orders",
+   "cols": [
+    "o_custkey",
+    "o_orderkey",
+    "o_orderdate"
+   ],
+   "wanted_by": [
+    "tpch_q05",
+    "tpch_q10"
+   ],
+   "size_mb": 27.547,
+   "benefit_ms": {
+    "ap17_function_on_column": 0.0,
+    "ap18_correlated_count_subquery": 0.0,
+    "ap21_scalar_subquery_in_select": 0.0,
+    "tpch_q05": 646.94,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "regression_ms": {
+    "ap17_function_on_column": 0.0,
+    "ap18_correlated_count_subquery": 0.0,
+    "ap21_scalar_subquery_in_select": 0.0,
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "paired_base_ms": {
+    "ap17_function_on_column": 588.622,
+    "ap18_correlated_count_subquery": 675.984,
+    "ap21_scalar_subquery_in_select": 47.07,
+    "tpch_q05": 1620.543,
+    "tpch_q10": 1957.678,
+    "tpch_q18": 3563.446
+   },
+   "with_index": {
+    "ap17_function_on_column": 642.79,
+    "ap18_correlated_count_subquery": 805.15,
+    "ap21_scalar_subquery_in_select": 50.145,
+    "tpch_q05": 973.601,
+    "tpch_q10": 1783.899,
+    "tpch_q18": 3521.713
+   },
+   "rounds_ms": {
+    "ap17_function_on_column": {
+     "without": [
+      573.189,
+      604.056
+     ],
+     "with": [
+      599.447,
+      686.133
+     ]
+    },
+    "ap18_correlated_count_subquery": {
+     "without": [
+      661.952,
+      690.015
+     ],
+     "with": [
+      719.752,
+      890.549
+     ]
+    },
+    "ap21_scalar_subquery_in_select": {
+     "without": [
+      41.941,
+      52.199
+     ],
+     "with": [
+      43.224,
+      57.066
+     ]
+    },
+    "tpch_q05": {
+     "without": [
+      1527.906,
+      1713.179
+     ],
+     "with": [
+      930.559,
+      1016.642
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      1919.009,
+      1996.347
+     ],
+     "with": [
+      1796.012,
+      1771.787
+     ]
+    },
+    "tpch_q18": {
+     "without": [
+      3646.365,
+      3480.527
+     ],
+     "with": [
+      3689.824,
+      3353.601
+     ]
+    }
+   },
+   "id": "adv_69b202b6d7"
+  },
+  {
+   "table": "customer",
+   "cols": [
+    "c_custkey",
+    "c_name"
+   ],
+   "wanted_by": [
+    "tpch_q18"
+   ],
+   "size_mb": 5.516,
+   "benefit_ms": {
+    "ap18_correlated_count_subquery": 0.0,
+    "ap21_scalar_subquery_in_select": 0.0,
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "regression_ms": {
+    "ap18_correlated_count_subquery": 0.0,
+    "ap21_scalar_subquery_in_select": 0.0,
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "paired_base_ms": {
+    "ap18_correlated_count_subquery": 721.687,
+    "ap21_scalar_subquery_in_select": 43.982,
+    "tpch_q05": 1474.707,
+    "tpch_q10": 1931.625,
+    "tpch_q18": 3353.101
+   },
+   "with_index": {
+    "ap18_correlated_count_subquery": 692.865,
+    "ap21_scalar_subquery_in_select": 47.286,
+    "tpch_q05": 1507.484,
+    "tpch_q10": 1945.648,
+    "tpch_q18": 3327.615
+   },
+   "rounds_ms": {
+    "ap18_correlated_count_subquery": {
+     "without": [
+      805.221,
+      638.152
+     ],
+     "with": [
+      686.833,
+      698.898
+     ]
+    },
+    "ap21_scalar_subquery_in_select": {
+     "without": [
+      45.474,
+      42.49
+     ],
+     "with": [
+      44.275,
+      50.297
+     ]
+    },
+    "tpch_q05": {
+     "without": [
+      1460.251,
+      1489.164
+     ],
+     "with": [
+      1511.469,
+      1503.498
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      1984.31,
+      1878.94
+     ],
+     "with": [
+      1954.2,
+      1937.095
+     ]
+    },
+    "tpch_q18": {
+     "without": [
+      3316.57,
+      3389.633
+     ],
+     "with": [
+      3366.677,
+      3288.554
+     ]
+    }
+   },
+   "id": "adv_5fa84e2ba5"
+  },
+  {
+   "table": "lineitem",
+   "cols": [
+    "l_returnflag"
+   ],
+   "wanted_by": [
+    "tpch_q10"
+   ],
+   "size_mb": 102.625,
+   "benefit_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "regression_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "paired_base_ms": {
+    "tpch_q05": 1760.784,
+    "tpch_q10": 2221.977,
+    "tpch_q18": 3840.254
+   },
+   "with_index": {
+    "tpch_q05": 1556.579,
+    "tpch_q10": 2028.139,
+    "tpch_q18": 3745.277
+   },
+   "rounds_ms": {
+    "tpch_q05": {
+     "without": [
+      1728.345,
+      1793.224
+     ],
+     "with": [
+      1647.197,
+      1465.962
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      2029.642,
+      2414.313
+     ],
+     "with": [
+      2012.809,
+      2043.47
+     ]
+    },
+    "tpch_q18": {
+     "without": [
+      3837.185,
+      3843.323
+     ],
+     "with": [
+      3694.6,
+      3795.954
+     ]
+    }
+   },
+   "id": "adv_eed5f659d9"
+  },
+  {
+   "table": "lineitem",
+   "cols": [
+    "l_returnflag",
+    "l_orderkey"
+   ],
+   "wanted_by": [
+    "tpch_q10"
+   ],
+   "size_mb": 102.625,
+   "benefit_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "regression_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "paired_base_ms": {
+    "tpch_q05": 2048.189,
+    "tpch_q10": 2516.524,
+    "tpch_q18": 4007.961
+   },
+   "with_index": {
+    "tpch_q05": 1906.459,
+    "tpch_q10": 2766.061,
+    "tpch_q18": 4466.336
+   },
+   "rounds_ms": {
+    "tpch_q05": {
+     "without": [
+      2021.353,
+      2075.025
+     ],
+     "with": [
+      1984.818,
+      1828.1
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      2115.317,
+      2917.732
+     ],
+     "with": [
+      3127.222,
+      2404.899
+     ]
+    },
+    "tpch_q18": {
+     "without": [
+      4213.511,
+      3802.411
+     ],
+     "with": [
+      4124.4,
+      4808.272
+     ]
+    }
+   },
+   "id": "adv_57ac111132"
+  },
+  {
+   "table": "lineitem",
+   "cols": [
+    "l_suppkey"
+   ],
+   "wanted_by": [
+    "tpch_q05"
+   ],
+   "size_mb": 115.656,
+   "benefit_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "regression_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "paired_base_ms": {
+    "tpch_q05": 1849.035,
+    "tpch_q10": 2179.721,
+    "tpch_q18": 4133.739
+   },
+   "with_index": {
+    "tpch_q05": 1933.636,
+    "tpch_q10": 2071.866,
+    "tpch_q18": 3459.622
+   },
+   "rounds_ms": {
+    "tpch_q05": {
+     "without": [
+      2180.582,
+      1517.489
+     ],
+     "with": [
+      2299.525,
+      1567.747
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      2380.443,
+      1978.999
+     ],
+     "with": [
+      2123.452,
+      2020.28
+     ]
+    },
+    "tpch_q18": {
+     "without": [
+      4720.373,
+      3547.106
+     ],
+     "with": [
+      3484.595,
+      3434.65
+     ]
+    }
+   },
+   "id": "adv_356aa41c73"
+  },
+  {
+   "table": "lineitem",
+   "cols": [
+    "l_suppkey",
+    "l_orderkey"
+   ],
+   "wanted_by": [
+    "tpch_q05"
+   ],
+   "size_mb": 115.656,
+   "benefit_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "regression_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0,
+    "tpch_q18": 0.0
+   },
+   "paired_base_ms": {
+    "tpch_q05": 1526.601,
+    "tpch_q10": 2016.905,
+    "tpch_q18": 3443.308
+   },
+   "with_index": {
+    "tpch_q05": 1554.931,
+    "tpch_q10": 1955.669,
+    "tpch_q18": 3410.939
+   },
+   "rounds_ms": {
+    "tpch_q05": {
+     "without": [
+      1569.585,
+      1483.617
+     ],
+     "with": [
+      1554.4,
+      1555.462
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      2065.831,
+      1967.979
+     ],
+     "with": [
+      1913.147,
+      1998.192
+     ]
+    },
+    "tpch_q18": {
+     "without": [
+      3514.682,
+      3371.934
+     ],
+     "with": [
+      3459.967,
+      3361.911
+     ]
+    }
+   },
+   "id": "adv_c198dd3a40"
+  },
+  {
+   "table": "nation",
+   "cols": [
+    "n_nationkey",
+    "n_name"
+   ],
+   "wanted_by": [
+    "tpch_q10"
+   ],
+   "size_mb": 0.016,
+   "benefit_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0
+   },
+   "regression_ms": {
+    "tpch_q05": 0.0,
+    "tpch_q10": 0.0
+   },
+   "paired_base_ms": {
+    "tpch_q05": 1502.642,
+    "tpch_q10": 1988.766
+   },
+   "with_index": {
+    "tpch_q05": 1609.045,
+    "tpch_q10": 2027.718
+   },
+   "rounds_ms": {
+    "tpch_q05": {
+     "without": [
+      1516.492,
+      1488.792
+     ],
+     "with": [
+      1643.646,
+      1574.444
+     ]
+    },
+    "tpch_q10": {
+     "without": [
+      1897.441,
+      2080.091
+     ],
+     "with": [
+      1887.213,
+      2168.222
+     ]
+    }
+   },
+   "id": "adv_1df9a05b47"
+  }
+ ],
+ "selections": {
+  "ilp": {
+   "chosen": [
+    "adv_69b202b6d7",
+    "adv_8b20f53ab3"
+   ],
+   "predicted_ms": 1012.71,
+   "solver": "CBC Optimal",
+   "size_mb": 49.09,
+   "actual": {
+    "per_query": {
+     "ap17_function_on_column": {
+      "base_ms": 654.163,
+      "with_ms": 530.062,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        731.163,
+        577.164
+       ],
+       "with": [
+        536.268,
+        523.857
+       ]
+      }
+     },
+     "ap18_correlated_count_subquery": {
+      "base_ms": 822.013,
+      "with_ms": 647.456,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        803.959,
+        840.066
+       ],
+       "with": [
+        651.148,
+        643.763
+       ]
+      }
+     },
+     "ap21_scalar_subquery_in_select": {
+      "base_ms": 53.129,
+      "with_ms": 41.672,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        52.538,
+        53.72
+       ],
+       "with": [
+        43.643,
+        39.702
+       ]
+      }
+     },
+     "tpch_q05": {
+      "base_ms": 1540.876,
+      "with_ms": 678.067,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        1621.825,
+        1459.927
+       ],
+       "with": [
+        687.907,
+        668.228
+       ]
+      }
+     },
+     "tpch_q10": {
+      "base_ms": 2005.725,
+      "with_ms": 1502.063,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        2002.115,
+        2009.334
+       ],
+       "with": [
+        1466.508,
+        1537.619
+       ]
+      }
+     },
+     "tpch_q18": {
+      "base_ms": 3344.354,
+      "with_ms": 3259.864,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        3264.47,
+        3424.239
+       ],
+       "with": [
+        3241.051,
+        3278.678
+       ]
+      }
+     }
+    },
+    "gain_ms": 1761.08,
+    "regressions": []
+   }
+  },
+  "greedy": {
+   "chosen": [
+    "adv_69b202b6d7",
+    "adv_8b20f53ab3"
+   ],
+   "predicted_ms": 1012.71,
+   "solver": "greedy gain per MB",
+   "size_mb": 49.09,
+   "actual": {
+    "per_query": {
+     "ap17_function_on_column": {
+      "base_ms": 654.163,
+      "with_ms": 530.062,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        731.163,
+        577.164
+       ],
+       "with": [
+        536.268,
+        523.857
+       ]
+      }
+     },
+     "ap18_correlated_count_subquery": {
+      "base_ms": 822.013,
+      "with_ms": 647.456,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        803.959,
+        840.066
+       ],
+       "with": [
+        651.148,
+        643.763
+       ]
+      }
+     },
+     "ap21_scalar_subquery_in_select": {
+      "base_ms": 53.129,
+      "with_ms": 41.672,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        52.538,
+        53.72
+       ],
+       "with": [
+        43.643,
+        39.702
+       ]
+      }
+     },
+     "tpch_q05": {
+      "base_ms": 1540.876,
+      "with_ms": 678.067,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        1621.825,
+        1459.927
+       ],
+       "with": [
+        687.907,
+        668.228
+       ]
+      }
+     },
+     "tpch_q10": {
+      "base_ms": 2005.725,
+      "with_ms": 1502.063,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        2002.115,
+        2009.334
+       ],
+       "with": [
+        1466.508,
+        1537.619
+       ]
+      }
+     },
+     "tpch_q18": {
+      "base_ms": 3344.354,
+      "with_ms": 3259.864,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        3264.47,
+        3424.239
+       ],
+       "with": [
+        3241.051,
+        3278.678
+       ]
+      }
+     }
+    },
+    "gain_ms": 1761.08,
+    "regressions": []
+   }
+  }
+ },
+ "baseline_drift_ratio": {
+  "ap17_function_on_column": 0.833,
+  "ap18_correlated_count_subquery": 0.868,
+  "ap21_scalar_subquery_in_select": 0.883,
+  "tpch_q05": 0.833,
+  "tpch_q10": 0.853,
+  "tpch_q18": 0.962
+ },
+ "failures": [
+  "customer(c_nationkey, c_custkey): CleanupError: creating the index dropped existing index(es) [('customer', 'c_nationkey')]; candidate not measured",
+  "orders(o_custkey, o_orderkey): CleanupError: creating the index dropped existing index(es) [('orders', 'o_custkey')]; candidate not measured"
+ ]
+}

@@ -1,10 +1,11 @@
 import { useState } from "react";
+import Advisor from "./Advisor.jsx";
 import Overview from "./Overview.jsx";
 import Studio from "./Studio.jsx";
 import Results from "./Results.jsx";
 
-// Workload Advisor and Scale Simulator tabs arrive with Phases 4 and 5 (their APIs do not exist yet).
-const TABS = { Overview, "Query Studio": Studio, Results };
+// The Scale Simulator tab arrives with Phase 5 (its API does not exist yet).
+const TABS = { Overview, "Query Studio": Studio, "Workload Advisor": Advisor, Results };
 
 export default function App() {
   const [tab, setTab] = useState("Overview");

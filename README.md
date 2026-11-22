@@ -46,9 +46,20 @@ python -m app.eval.report results/dev-001.jsonl
 
 Tune on dev only. Run the test split once, from a clean git tree, with `--allow-test`.
 
+## Workload Advisor (Phase 4)
+
+Which indexes are worth their storage for a workload? For each candidate index (parsed from the dev queries of one dataset with SQLGlot) the advisor really `CREATE INDEX`es it as `admin`, `ANALYZE`s, measures the affected queries as the read-only user against a paired baseline, then drops it. An ILP (PuLP + CBC) picks the best set under a storage budget and index cap; a greedy heuristic gets the same measurements. Each chosen set is then created together and the workload re-measured (predicted vs actual gain). Settings: `config/advisor.yaml`. Results: `results/advisor/*.json`.
+
+```sh
+curl -X POST localhost:8000/advisor/run -H 'Content-Type: application/json' -d '{"dataset":"sakila"}'   # -> {"job_id": ...}
+curl localhost:8000/advisor/jobs/<job_id>                                                                # progress log, then result
+```
+
+Dev split only; one run at a time; do not run it during an evaluation run (it re-ANALYZEs tables). Caveats: `docs/threats_to_validity.md` items 46-52.
+
 ## UI (Phase 6, partial)
 
-Overview (project status, headline run, what the OR engine found, AHP weights), Query Studio (optimize a dev query or an ad-hoc one; before/after runtime and SQL) and a Results page that reads `results/*.jsonl`. Unfinished test-split runs are withheld by the API (403). The Workload Advisor and Scale Simulator tabs come with Phases 4 and 5.
+Overview (project status, headline run, what the OR engine found, AHP weights), Query Studio (optimize a dev query or an ad-hoc one; before/after runtime and SQL), Workload Advisor (run an index experiment, watch its log, read the ILP vs greedy result) and a Results page that reads `results/*.jsonl`. Unfinished test-split runs are withheld by the API (403). The Scale Simulator tab comes with Phase 5.
 
 ```sh
 cd backend && uvicorn app.main:app --port 8000     # API

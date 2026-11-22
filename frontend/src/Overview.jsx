@@ -8,9 +8,9 @@ const PHASES = [
   ["2", "Query Studio core: candidate pool, correctness check, metrics, AHP + TOPSIS", "done"],
   ["3", "Three-arm evaluation harness, dev runs, freeze (tag freeze-v1)", "done"],
   ["3b", "The single frozen TEST run (two attempts aborted by the environment; not yet completed)", "pending"],
-  ["4", "Workload Advisor (ILP index selection)", "todo"],
+  ["4", "Workload Advisor: real index experiments, ILP (CBC) vs greedy selection, validated on the server", "done"],
   ["5", "Scale Simulator (M/M/c + SimPy)", "todo"],
-  ["6", "UI (this): Overview, Query Studio, Results", "partial"],
+  ["6", "UI: Overview, Query Studio, Workload Advisor, Results (Scale Simulator tab arrives with Phase 5)", "partial"],
 ];
 const TONE = { done: "bg-emerald-100 text-emerald-800", pending: "bg-amber-100 text-amber-800", partial: "bg-sky-100 text-sky-800", todo: "bg-slate-200 text-slate-600" };
 const LABEL = { done: "done", pending: "pending", partial: "partial", todo: "not started" };

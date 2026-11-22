@@ -1,0 +1,479 @@
+{
+ "id": "adv-employees-20261122T171930",
+ "dataset": "employees",
+ "started": "2026-11-22T17:19:30.122683+00:00",
+ "finished": "2026-11-22T17:20:42.304735+00:00",
+ "mysql": "8.4.13",
+ "budget_mb": 64,
+ "max_indexes": 4,
+ "protocol": {
+  "warmup_runs": 2,
+  "timed_runs": 5,
+  "query_timeout_s": 120,
+  "min_gain_pct": 15,
+  "rounds": 2
+ },
+ "baseline": {
+  "ap12_or_across_columns": {
+   "ms": 146.691,
+   "iqr": 9.522,
+   "outcome": "ok"
+  },
+  "ap13_leading_wildcard_like": {
+   "ms": 107.143,
+   "iqr": 11.905,
+   "outcome": "ok"
+  },
+  "ap15_having_instead_of_where": {
+   "ms": 102.412,
+   "iqr": 15.258,
+   "outcome": "ok"
+  },
+  "ap16_deep_offset_pagination": {
+   "ms": 408.736,
+   "iqr": 74.192,
+   "outcome": "ok"
+  },
+  "emp_current_managers": {
+   "ms": 1.175,
+   "iqr": 0.058,
+   "outcome": "ok"
+  }
+ },
+ "candidates": [
+  {
+   "table": "departments",
+   "cols": [
+    "dept_no",
+    "dept_name"
+   ],
+   "wanted_by": [
+    "emp_current_managers"
+   ],
+   "size_mb": 0.016,
+   "benefit_ms": {
+    "emp_current_managers": 0.0
+   },
+   "regression_ms": {
+    "emp_current_managers": 0.0
+   },
+   "paired_base_ms": {
+    "emp_current_managers": 1.495
+   },
+   "with_index": {
+    "emp_current_managers": 1.566
+   },
+   "rounds_ms": {
+    "emp_current_managers": {
+     "without": [
+      1.413,
+      1.577
+     ],
+     "with": [
+      1.576,
+      1.555
+     ]
+    }
+   },
+   "id": "adv_7287f9de58"
+  },
+  {
+   "table": "dept_emp",
+   "cols": [
+    "dept_no",
+    "from_date"
+   ],
+   "wanted_by": [
+    "ap12_or_across_columns"
+   ],
+   "size_mb": 6.516,
+   "benefit_ms": {
+    "ap12_or_across_columns": 0.0,
+    "ap15_having_instead_of_where": 0.0
+   },
+   "regression_ms": {
+    "ap12_or_across_columns": 0.0,
+    "ap15_having_instead_of_where": 0.0
+   },
+   "paired_base_ms": {
+    "ap12_or_across_columns": 158.435,
+    "ap15_having_instead_of_where": 93.726
+   },
+   "with_index": {
+    "ap12_or_across_columns": 188.084,
+    "ap15_having_instead_of_where": 92.782
+   },
+   "rounds_ms": {
+    "ap12_or_across_columns": {
+     "without": [
+      161.244,
+      155.626
+     ],
+     "with": [
+      177.505,
+      198.664
+     ]
+    },
+    "ap15_having_instead_of_where": {
+     "without": [
+      95.058,
+      92.393
+     ],
+     "with": [
+      88.072,
+      97.493
+     ]
+    }
+   },
+   "id": "adv_b8c7af1ddb"
+  },
+  {
+   "table": "dept_emp",
+   "cols": [
+    "from_date"
+   ],
+   "wanted_by": [
+    "ap12_or_across_columns"
+   ],
+   "size_mb": 6.516,
+   "benefit_ms": {
+    "ap12_or_across_columns": 57.96,
+    "ap15_having_instead_of_where": 0.0
+   },
+   "regression_ms": {
+    "ap12_or_across_columns": 0.0,
+    "ap15_having_instead_of_where": 0.0
+   },
+   "paired_base_ms": {
+    "ap12_or_across_columns": 158.716,
+    "ap15_having_instead_of_where": 100.083
+   },
+   "with_index": {
+    "ap12_or_across_columns": 100.76,
+    "ap15_having_instead_of_where": 98.855
+   },
+   "rounds_ms": {
+    "ap12_or_across_columns": {
+     "without": [
+      156.153,
+      161.279
+     ],
+     "with": [
+      96.547,
+      104.972
+     ]
+    },
+    "ap15_having_instead_of_where": {
+     "without": [
+      98.573,
+      101.593
+     ],
+     "with": [
+      103.46,
+      94.249
+     ]
+    }
+   },
+   "id": "adv_9ca0b35848"
+  },
+  {
+   "table": "dept_manager",
+   "cols": [
+    "emp_no",
+    "dept_no",
+    "to_date"
+   ],
+   "wanted_by": [
+    "emp_current_managers"
+   ],
+   "size_mb": 0.016,
+   "benefit_ms": {
+    "emp_current_managers": 0.0
+   },
+   "regression_ms": {
+    "emp_current_managers": 0.0
+   },
+   "paired_base_ms": {
+    "emp_current_managers": 1.617
+   },
+   "with_index": {
+    "emp_current_managers": 1.567
+   },
+   "rounds_ms": {
+    "emp_current_managers": {
+     "without": [
+      1.526,
+      1.708
+     ],
+     "with": [
+      1.664,
+      1.47
+     ]
+    }
+   },
+   "id": "adv_d1f720990f"
+  },
+  {
+   "table": "dept_manager",
+   "cols": [
+    "to_date"
+   ],
+   "wanted_by": [
+    "emp_current_managers"
+   ],
+   "size_mb": 0.016,
+   "benefit_ms": {
+    "emp_current_managers": 0.0
+   },
+   "regression_ms": {
+    "emp_current_managers": 0.0
+   },
+   "paired_base_ms": {
+    "emp_current_managers": 1.325
+   },
+   "with_index": {
+    "emp_current_managers": 1.507
+   },
+   "rounds_ms": {
+    "emp_current_managers": {
+     "without": [
+      1.371,
+      1.278
+     ],
+     "with": [
+      1.478,
+      1.536
+     ]
+    }
+   },
+   "id": "adv_76b4aad268"
+  },
+  {
+   "table": "salaries",
+   "cols": [
+    "from_date"
+   ],
+   "wanted_by": [
+    "ap16_deep_offset_pagination"
+   ],
+   "size_mb": 39.562,
+   "benefit_ms": {
+    "ap16_deep_offset_pagination": 0.0
+   },
+   "regression_ms": {
+    "ap16_deep_offset_pagination": 0.0
+   },
+   "paired_base_ms": {
+    "ap16_deep_offset_pagination": 415.18
+   },
+   "with_index": {
+    "ap16_deep_offset_pagination": 402.524
+   },
+   "rounds_ms": {
+    "ap16_deep_offset_pagination": {
+     "without": [
+      419.166,
+      411.195
+     ],
+     "with": [
+      406.168,
+      398.879
+     ]
+    }
+   },
+   "id": "adv_535754fe80"
+  }
+ ],
+ "selections": {
+  "ilp": {
+   "chosen": [
+    "adv_9ca0b35848"
+   ],
+   "predicted_ms": 57.96,
+   "solver": "CBC Optimal",
+   "size_mb": 6.52,
+   "actual": {
+    "per_query": {
+     "ap12_or_across_columns": {
+      "base_ms": 164.56,
+      "with_ms": 96.464,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        162.71,
+        166.409
+       ],
+       "with": [
+        105.126,
+        87.801
+       ]
+      }
+     },
+     "ap13_leading_wildcard_like": {
+      "base_ms": 108.944,
+      "with_ms": 111.305,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        107.299,
+        110.588
+       ],
+       "with": [
+        121.063,
+        101.546
+       ]
+      }
+     },
+     "ap15_having_instead_of_where": {
+      "base_ms": 91.111,
+      "with_ms": 98.52,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        92.858,
+        89.363
+       ],
+       "with": [
+        88.948,
+        108.092
+       ]
+      }
+     },
+     "ap16_deep_offset_pagination": {
+      "base_ms": 386.451,
+      "with_ms": 412.438,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        392.164,
+        380.738
+       ],
+       "with": [
+        426.879,
+        397.997
+       ]
+      }
+     },
+     "emp_current_managers": {
+      "base_ms": 1.133,
+      "with_ms": 1.483,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        1.085,
+        1.182
+       ],
+       "with": [
+        1.306,
+        1.66
+       ]
+      }
+     }
+    },
+    "gain_ms": 31.99,
+    "regressions": [
+     "emp_current_managers"
+    ]
+   }
+  },
+  "greedy": {
+   "chosen": [
+    "adv_9ca0b35848"
+   ],
+   "predicted_ms": 57.96,
+   "solver": "greedy gain per MB",
+   "size_mb": 6.52,
+   "actual": {
+    "per_query": {
+     "ap12_or_across_columns": {
+      "base_ms": 164.56,
+      "with_ms": 96.464,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        162.71,
+        166.409
+       ],
+       "with": [
+        105.126,
+        87.801
+       ]
+      }
+     },
+     "ap13_leading_wildcard_like": {
+      "base_ms": 108.944,
+      "with_ms": 111.305,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        107.299,
+        110.588
+       ],
+       "with": [
+        121.063,
+        101.546
+       ]
+      }
+     },
+     "ap15_having_instead_of_where": {
+      "base_ms": 91.111,
+      "with_ms": 98.52,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        92.858,
+        89.363
+       ],
+       "with": [
+        88.948,
+        108.092
+       ]
+      }
+     },
+     "ap16_deep_offset_pagination": {
+      "base_ms": 386.451,
+      "with_ms": 412.438,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        392.164,
+        380.738
+       ],
+       "with": [
+        426.879,
+        397.997
+       ]
+      }
+     },
+     "emp_current_managers": {
+      "base_ms": 1.133,
+      "with_ms": 1.483,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        1.085,
+        1.182
+       ],
+       "with": [
+        1.306,
+        1.66
+       ]
+      }
+     }
+    },
+    "gain_ms": 31.99,
+    "regressions": [
+     "emp_current_managers"
+    ]
+   }
+  }
+ },
+ "baseline_drift_ratio": {
+  "ap12_or_across_columns": 1.066,
+  "ap13_leading_wildcard_like": 0.982,
+  "ap15_having_instead_of_where": 0.955,
+  "ap16_deep_offset_pagination": 0.993,
+  "emp_current_managers": 0.87
+ },
+ "failures": []
+}

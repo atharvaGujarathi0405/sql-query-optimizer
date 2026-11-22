@@ -1,0 +1,367 @@
+{
+ "id": "adv-sakila-20261122T171816",
+ "dataset": "sakila",
+ "started": "2026-11-22T17:18:16.854310+00:00",
+ "finished": "2026-11-22T17:19:25.474032+00:00",
+ "mysql": "8.4.13",
+ "budget_mb": 64,
+ "max_indexes": 4,
+ "protocol": {
+  "warmup_runs": 2,
+  "timed_runs": 5,
+  "query_timeout_s": 120,
+  "min_gain_pct": 15,
+  "rounds": 2
+ },
+ "baseline": {
+  "ap03_correlated_subquery": {
+   "ms": 724.879,
+   "iqr": 68.15,
+   "outcome": "ok"
+  },
+  "ap05_leading_wildcard_like": {
+   "ms": 1.962,
+   "iqr": 0.851,
+   "outcome": "ok"
+  },
+  "sak_rentals_per_store_month": {
+   "ms": 47.643,
+   "iqr": 4.731,
+   "outcome": "ok"
+  },
+  "sak_top_customers": {
+   "ms": 56.039,
+   "iqr": 16.358,
+   "outcome": "ok"
+  }
+ },
+ "candidates": [
+  {
+   "table": "inventory",
+   "cols": [
+    "inventory_id",
+    "store_id"
+   ],
+   "wanted_by": [
+    "sak_rentals_per_store_month"
+   ],
+   "size_mb": 0.062,
+   "benefit_ms": {
+    "sak_rentals_per_store_month": 0.0
+   },
+   "regression_ms": {
+    "sak_rentals_per_store_month": 0.0
+   },
+   "paired_base_ms": {
+    "sak_rentals_per_store_month": 51.526
+   },
+   "with_index": {
+    "sak_rentals_per_store_month": 49.24
+   },
+   "rounds_ms": {
+    "sak_rentals_per_store_month": {
+     "without": [
+      48.647,
+      54.406
+     ],
+     "with": [
+      45.02,
+      53.461
+     ]
+    }
+   },
+   "id": "adv_dd635d24a4"
+  },
+  {
+   "table": "payment",
+   "cols": [
+    "amount"
+   ],
+   "wanted_by": [
+    "ap03_correlated_subquery"
+   ],
+   "size_mb": 0.188,
+   "benefit_ms": {
+    "ap03_correlated_subquery": 0.0,
+    "sak_top_customers": 0.0
+   },
+   "regression_ms": {
+    "ap03_correlated_subquery": 0.0,
+    "sak_top_customers": 0.0
+   },
+   "paired_base_ms": {
+    "ap03_correlated_subquery": 766.987,
+    "sak_top_customers": 47.237
+   },
+   "with_index": {
+    "ap03_correlated_subquery": 710.103,
+    "sak_top_customers": 42.032
+   },
+   "rounds_ms": {
+    "ap03_correlated_subquery": {
+     "without": [
+      802.088,
+      731.887
+     ],
+     "with": [
+      699.011,
+      721.196
+     ]
+    },
+    "sak_top_customers": {
+     "without": [
+      52.632,
+      41.843
+     ],
+     "with": [
+      42.375,
+      41.688
+     ]
+    }
+   },
+   "id": "adv_49ce1d415f"
+  },
+  {
+   "table": "payment",
+   "cols": [
+    "customer_id",
+    "amount"
+   ],
+   "wanted_by": [
+    "ap03_correlated_subquery"
+   ],
+   "size_mb": 0.219,
+   "benefit_ms": {
+    "ap03_correlated_subquery": 496.88,
+    "sak_top_customers": 17.0
+   },
+   "regression_ms": {
+    "ap03_correlated_subquery": 0.0,
+    "sak_top_customers": 0.0
+   },
+   "paired_base_ms": {
+    "ap03_correlated_subquery": 698.625,
+    "sak_top_customers": 43.032
+   },
+   "with_index": {
+    "ap03_correlated_subquery": 201.745,
+    "sak_top_customers": 26.035
+   },
+   "rounds_ms": {
+    "ap03_correlated_subquery": {
+     "without": [
+      688.459,
+      708.791
+     ],
+     "with": [
+      194.464,
+      209.026
+     ]
+    },
+    "sak_top_customers": {
+     "without": [
+      42.74,
+      43.323
+     ],
+     "with": [
+      24.593,
+      27.476
+     ]
+    }
+   },
+   "id": "adv_53b5b65234"
+  },
+  {
+   "table": "customer",
+   "cols": [
+    "first_name"
+   ],
+   "wanted_by": [
+    "sak_top_customers"
+   ],
+   "size_mb": 0.016,
+   "benefit_ms": {
+    "sak_top_customers": 0.0
+   },
+   "regression_ms": {
+    "sak_top_customers": 0.0
+   },
+   "paired_base_ms": {
+    "sak_top_customers": 46.815
+   },
+   "with_index": {
+    "sak_top_customers": 46.772
+   },
+   "rounds_ms": {
+    "sak_top_customers": {
+     "without": [
+      47.419,
+      46.211
+     ],
+     "with": [
+      43.761,
+      49.782
+     ]
+    }
+   },
+   "id": "adv_890eabcf48"
+  }
+ ],
+ "selections": {
+  "ilp": {
+   "chosen": [
+    "adv_53b5b65234"
+   ],
+   "predicted_ms": 513.88,
+   "solver": "CBC Optimal",
+   "size_mb": 0.22,
+   "actual": {
+    "per_query": {
+     "ap03_correlated_subquery": {
+      "base_ms": 696.322,
+      "with_ms": 231.498,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        693.173,
+        699.47
+       ],
+       "with": [
+        201.319,
+        261.676
+       ]
+      }
+     },
+     "ap05_leading_wildcard_like": {
+      "base_ms": 1.631,
+      "with_ms": 1.603,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        1.494,
+        1.767
+       ],
+       "with": [
+        1.515,
+        1.69
+       ]
+      }
+     },
+     "sak_rentals_per_store_month": {
+      "base_ms": 68.668,
+      "with_ms": 48.157,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        46.302,
+        91.034
+       ],
+       "with": [
+        47.832,
+        48.481
+       ]
+      }
+     },
+     "sak_top_customers": {
+      "base_ms": 44.626,
+      "with_ms": 27.454,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        44.91,
+        44.342
+       ],
+       "with": [
+        29.496,
+        25.413
+       ]
+      }
+     }
+    },
+    "gain_ms": 502.54,
+    "regressions": []
+   }
+  },
+  "greedy": {
+   "chosen": [
+    "adv_53b5b65234"
+   ],
+   "predicted_ms": 513.88,
+   "solver": "greedy gain per MB",
+   "size_mb": 0.22,
+   "actual": {
+    "per_query": {
+     "ap03_correlated_subquery": {
+      "base_ms": 696.322,
+      "with_ms": 231.498,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        693.173,
+        699.47
+       ],
+       "with": [
+        201.319,
+        261.676
+       ]
+      }
+     },
+     "ap05_leading_wildcard_like": {
+      "base_ms": 1.631,
+      "with_ms": 1.603,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        1.494,
+        1.767
+       ],
+       "with": [
+        1.515,
+        1.69
+       ]
+      }
+     },
+     "sak_rentals_per_store_month": {
+      "base_ms": 68.668,
+      "with_ms": 48.157,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        46.302,
+        91.034
+       ],
+       "with": [
+        47.832,
+        48.481
+       ]
+      }
+     },
+     "sak_top_customers": {
+      "base_ms": 44.626,
+      "with_ms": 27.454,
+      "outcome": "ok",
+      "rounds": {
+       "without": [
+        44.91,
+        44.342
+       ],
+       "with": [
+        29.496,
+        25.413
+       ]
+      }
+     }
+    },
+    "gain_ms": 502.54,
+    "regressions": []
+   }
+  }
+ },
+ "baseline_drift_ratio": {
+  "ap03_correlated_subquery": 1.041,
+  "ap05_leading_wildcard_like": 0.823,
+  "sak_rentals_per_store_month": 1.047,
+  "sak_top_customers": 0.745
+ },
+ "failures": []
+}
