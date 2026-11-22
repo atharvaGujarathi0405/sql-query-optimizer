@@ -329,3 +329,15 @@ for the author (it would need its own pool, prompt and repeats). Nothing here fe
     (SQLGlot; one alias map per statement) and are capped at 10 per run, so the ILP optimises over that pool only; it
     does not prove an index outside the pool is worse. CBC is used through PuLP 3.x (`pulp>=3,<4`) because PuLP 4.x no
     longer bundles the CBC binary.
+
+## Unfinished test runs (recorded 2026-11-23)
+
+53. **`test-002` is a second unfinished test run and is not a result.** The file (untracked) holds 9 of 25 queries and
+    no `run_end`; Docker was down when this was noticed, and the cause is not documented. Its outcomes were not
+    analysed and the results API withholds it (403). One disclosure: while checking the state of the repository an
+    assistant session printed the last ~600 bytes of the file, which contained a single LLM pick record (arm 2a,
+    repeat 3, picked `c1`) and no scored outcome. Like `test-001`, it is to be replaced by a rerun of the whole split
+    under a new id from the same frozen commit; partial results are not merged.
+54. **The advisor changed table statistics after the dev runs and the pools (see item 47).** Disclosed so that the
+    test run's `run_meta` and this document can be read together: the frozen test run should be the next thing that
+    touches the evaluation tables.

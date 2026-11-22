@@ -1,0 +1,16 @@
+meta {
+  name: Advisor: settings
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/advisor/settings
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.min_gain_pct: eq 15
+}

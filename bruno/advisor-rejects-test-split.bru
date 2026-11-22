@@ -1,0 +1,22 @@
+meta {
+  name: Advisor: test-split query is refused
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/advisor/run
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "dataset": "sakila",
+    "query_ids": ["ap08_arithmetic_on_indexed_column"]
+  }
+}
+
+assert {
+  res.status: eq 422
+}

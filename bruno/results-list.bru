@@ -1,0 +1,19 @@
+meta {
+  name: Results: list runs
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/results
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Unfinished test-split runs are listed with withheld: true and their detail returns 403.
+}

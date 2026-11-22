@@ -1,0 +1,30 @@
+meta {
+  name: Advisor: start a run (sakila, dev workload)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/advisor/run
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "dataset": "sakila"
+  }
+}
+
+vars:post-response {
+  jobId: res.body.job_id
+}
+
+assert {
+  res.status: eq 202
+}
+
+docs {
+  Creates and drops real indexes (admin user). Dev split only; one run at a time (409 otherwise).
+  Do not run during an evaluation run.
+}

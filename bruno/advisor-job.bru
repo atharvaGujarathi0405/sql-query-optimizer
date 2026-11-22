@@ -1,0 +1,15 @@
+meta {
+  name: Advisor: job progress and result
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/advisor/jobs/{{jobId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

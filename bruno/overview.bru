@@ -1,0 +1,17 @@
+meta {
+  name: Overview (counts only)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/overview
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.queries.total: eq 40
+  res.body.queries.test: eq 25
+}

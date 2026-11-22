@@ -55,7 +55,11 @@ curl -X POST localhost:8000/advisor/run -H 'Content-Type: application/json' -d '
 curl localhost:8000/advisor/jobs/<job_id>                                                                # progress log, then result
 ```
 
-Dev split only; one run at a time; do not run it during an evaluation run (it re-ANALYZEs tables). Caveats: `docs/threats_to_validity.md` items 46-52.
+Dev split only; one run at a time; do not run it during an evaluation run (it re-ANALYZEs tables). Caveats: `docs/threats_to_validity.md` items 46-52 (and 53-54 for unfinished test runs and statistics drift).
+
+## Paper figures
+
+`python scripts/make_figures.py` writes `docs/figures/fig1..fig5` (PNG 300 dpi + SVG) from `results/dev-006.jsonl`, `results/advisor/*.json` and one recorded Query Studio run. They are dev-split reference figures; regenerate Figs 2-3 from the test run once it exists.
 
 ## UI (Phase 6, partial)
 
