@@ -14,3 +14,15 @@ def test_run_metadata_records_live_server_and_hardware():
     assert m["query_timeout_s"] == 120
     hw = m["hardware"]
     assert hw["cpu"] and hw["logical_cores"] and hw["host_ram_bytes"]
+    assert hw["docker_vm_ram_bytes"] > 2**30  # dev-006 stored null here
+
+
+def test_run_metadata_refuses_to_start_when_docker_ram_is_unreadable(monkeypatch):
+    from app.eval import runinfo
+    monkeypatch.setattr(runinfo, "_run", lambda cmd: None)
+    try:
+        runinfo.run_metadata(conn=None)  # raises before touching the connection
+    except RuntimeError as e:
+        assert "Docker" in str(e)
+    else:
+        raise AssertionError("run_metadata must not return a record without the Docker VM RAM")

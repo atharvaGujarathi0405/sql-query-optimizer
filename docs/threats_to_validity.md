@@ -214,3 +214,25 @@ the final list.
     fails is logged as a failure and scored as the original; a run with such failures in the LLM arms
     should be repeated rather than reported (as with the outage in dev-002). Run time therefore
     depends on the provider's limits, and the daily cap bounds how many full runs fit in a day.
+
+## Provider switch to Ollama (after dev-005; recorded 2026-11-22)
+
+37. **The final provider is Ollama `qwen2.5-coder:7b` (temperature 0, seed 42), not Groq.** Chosen because it is
+    CLAUDE.md's primary provider, has no rate limits (threat 36) and is one provider for the whole run. The
+    Groq pools (`qwen/qwen3.8-27b`) are kept in `candidates_groq/` and are never mixed in (the harness refuses a
+    pool from another provider). dev-001..dev-004 are Groq runs and are not comparable with dev-006. A 7B model is
+    a much weaker generator and selector than the 27B reasoning model, so absolute numbers (how often a rewrite
+    exists, how often arm 2 errs) do not transfer to stronger LLMs. Threats 17 and 25 (same model generates the pool
+    and acts as arm 2) apply unchanged to the 7B model.
+38. **dev-006 is the reference dev run but is not a frozen-state run.** It ran from a dirty git tree
+    (`c966d154`, dirty), and its hardware record has `docker_vm_ram_bytes: null` (the `docker info` call failed
+    silently; the VM had 8.2 GB in dev-003). Rule 7 asks for hardware to be recorded; `run_metadata` now refuses to
+    start without it. The test run must come from a clean tree with the field present. dev-005 is an aborted
+    Groq record (429s, no `run_end`).
+39. **On dev-006 arm 3 and 3-measured are identical on all 15 queries.** The EXPLAIN-estimate criteria did not flip
+    any pick with the Ollama pools, so the a-priori and the post-dev OR variants cannot be told apart on dev. On
+    the 12 contested queries OR had 3 wins / 0 losses, 2b 14 wins (query x repeat) / 2 losses, picks identical on
+    9 of 15 (Wilcoxon p = 0.0625 for 3 vs 2b, 0.027 for 3 vs 2a). Read as counts and effect sizes; n is small.
+40. **Open item: is the multi-criteria machinery needed at all?** If a runtime-only rule picks the same candidates
+    on test, AHP/TOPSIS adds nothing beyond "fastest measured candidate with a noise guard" (threat 35c). Whether
+    to score an explicit runtime-argmin arm from the same data is decided BEFORE the freeze, not after seeing test.

@@ -41,7 +41,7 @@ def _cpu_name() -> str:
 
 def _run(cmd: list[str]) -> str | None:
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=20, check=True,
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=True,
                               cwd=Path(__file__).resolve().parents[3]).stdout.strip()
     except Exception:
         return None
@@ -49,6 +49,10 @@ def _run(cmd: list[str]) -> str | None:
 
 def run_metadata(conn) -> dict:
     """`conn` is any open MySQL connection (the reader is enough)."""
+    # Rule 7: hardware must be recorded. dev-006 silently stored null here; refuse to start instead.
+    vm_ram = int(_run(["docker", "info", "--format", "{{.MemTotal}}"]) or 0)
+    if not vm_ram:
+        raise RuntimeError("cannot read the Docker VM RAM (`docker info` failed); is Docker Desktop running?")
     cur = conn.cursor()
     server = {}
     for v in _VARS:
@@ -62,7 +66,7 @@ def run_metadata(conn) -> dict:
             "cpu": _cpu_name(), "logical_cores": os.cpu_count(), "host_ram_bytes": _host_ram_bytes(),
             "os": platform.platform(),
             # RAM Docker gives the MySQL container VM: what the buffer pool actually competes for.
-            "docker_vm_ram_bytes": int(_run(["docker", "info", "--format", "{{.MemTotal}}"]) or 0) or None,
+            "docker_vm_ram_bytes": vm_ram,
         },
         "software": {"python": platform.python_version(), "git_commit": _run(["git", "rev-parse", "HEAD"]),
                      "git_dirty": bool(_run(["git", "status", "--porcelain"]))},

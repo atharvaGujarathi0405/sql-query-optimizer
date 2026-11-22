@@ -581,3 +581,34 @@ Full text: docs/threats_to_validity.md, items 1-30. Headlines:
   table asymmetry vs 2b, and the "adds nothing beyond runtime argmin" outcome).
   NEXT: a clean dev run with the new arm recorded natively (dev-004), then the open
   items in 15.5 (pool productivity, final provider), then freeze and the single test run.
+
+
+--------------------------------------------------------------------------------
+17. UPDATE 2026-11-22: OLLAMA SWITCH, dev-006, PARTIAL UI, HOUSEKEEPING
+--------------------------------------------------------------------------------
+17.1 Done since section 16
+  60b2898  Provider is now Ollama qwen2.5-coder:7b (model stored under ollama_models/, gitignored).
+           Groq pools moved to candidates_groq/ (kept, never mixed). 15 dev pools regenerated;
+           TPC-H needed LLM_TIMEOUT_S=900 (.env). dev-005 = aborted Groq record. dev-006 = first
+           complete run with 3-measured recorded natively, no failures.
+  85acba2  Phase 6 (partial): Query Studio + Results pages, GET /queries (dev only), GET /results.
+  This session: run_metadata refuses to start when the Docker VM RAM cannot be read (dev-006 stored
+           null); two tests added. Full suite with MySQL up: 204 passed.
+
+17.2 dev-006 (dev split, 15 queries, 12 with a real choice; threats 37-40)
+  OR (3) 3 win / 12 tie / 0 loss; 3-measured identical to 3 on all 15; 3-raw 3/11/1 (loses on ap17);
+  2b 14 win / 59 tie / 2 loss (75 units); 2a 15 / 45 / 15. 3 vs 2b: 9 of 15 identical, p = 0.0625;
+  3 vs 2a p = 0.027. No failures. It ran from a dirty tree with docker_vm_ram null: a reference
+  dev run, not the final one.
+
+17.3 Decisions treated as settled (no objection raised): keep the 1.0 x IQR noise guard; accept pool
+  productivity as is (3 of 15 dev pools original-only on Ollama); Ollama is the provider.
+
+17.4 Remaining, in order
+  A  housekeeping (this section; CLAUDE.md still has the stray "go" line, line 32, uncommitted)
+  B  Phase 3 close-out: buffer-pool residency check, report upgrades (per category, bootstrap CI),
+     decide on a runtime-argmin arm, generate Ollama pools for the 25 test queries (no re-rolling),
+     freeze + tag, ONE test run from a clean tree (--allow-test)
+  C  Phase 4 Workload Advisor   D  Phase 5 Scale Simulator   E  finish UI + verify in a browser + Bruno
+  F  write-up (disclose ap08/ap19/ap02 seen in Phase 2; candidates_groq/ap08 is a 0-byte file)
+  Not verified: UI rendering, Bruno collection, buffer-pool residency.
