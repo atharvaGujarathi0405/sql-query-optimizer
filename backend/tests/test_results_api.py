@@ -29,6 +29,14 @@ def test_unknown_or_traversing_run_is_404():
         assert client.get(f"/results/{rid}").status_code == 404
 
 
-def test_every_recorded_run_renders_including_those_before_3_measured_existed():
+def test_every_recorded_run_renders_except_unfinished_test_runs_which_are_withheld():
     for r in client.get("/results").json():
-        assert client.get(f"/results/{r['run_id']}").status_code == 200, r["run_id"]
+        want = 403 if r["split"] == "test" and not r["complete"] else 200
+        assert r["withheld"] == (want == 403)
+        assert client.get(f"/results/{r['run_id']}").status_code == want, r["run_id"]
+
+
+def test_overview_is_counts_only_and_matches_the_frozen_split():
+    o = client.get("/overview").json()
+    assert o["queries"]["dev"] == 15 and o["queries"]["test"] == 25 and o["queries"]["total"] == 40
+    assert o["ahp"]["cr"] < 0.1 and abs(sum(o["ahp"]["weights"]) - 1) < 0.01

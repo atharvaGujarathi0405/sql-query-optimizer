@@ -1,12 +1,13 @@
 import { useState } from "react";
+import Overview from "./Overview.jsx";
 import Studio from "./Studio.jsx";
 import Results from "./Results.jsx";
 
 // Workload Advisor and Scale Simulator tabs arrive with Phases 4 and 5 (their APIs do not exist yet).
-const TABS = { "Query Studio": Studio, Results };
+const TABS = { Overview, "Query Studio": Studio, Results };
 
 export default function App() {
-  const [tab, setTab] = useState("Query Studio");
+  const [tab, setTab] = useState("Overview");
   const Page = TABS[tab];
   return (
     <div className="mx-auto max-w-6xl p-4">
@@ -21,7 +22,7 @@ export default function App() {
           ))}
         </nav>
       </header>
-      <Page />
+      <Page go={setTab} />
     </div>
   );
 }

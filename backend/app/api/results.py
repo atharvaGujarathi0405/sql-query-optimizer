@@ -43,8 +43,14 @@ def list_runs() -> list[dict]:
             continue
         m = d["meta"]
         out.append({"run_id": m["run_id"], "split": m["split"], "provider": m["provider"], "model": m["model"],
-                    "queries": len(m["query_ids"]), "complete": d["complete"], "note": INVALID.get(m["run_id"])})
+                    "queries": len(m["query_ids"]), "complete": d["complete"], "note": INVALID.get(m["run_id"]),
+                    "withheld": withheld(d["meta"], d["complete"])})
     return out
+
+
+def withheld(meta: dict, complete: bool) -> bool:
+    """An unfinished test run is not a result and nobody should read partial test outcomes (rules 5, 9)."""
+    return meta["split"] == "test" and not complete
 
 
 @router.get("/results/{run_id}")
@@ -53,6 +59,8 @@ def run_detail(run_id: str) -> dict:
     if not RUN_ID.match(run_id) or not path.exists():
         raise HTTPException(404, f"unknown run {run_id!r}")
     data = rep.load(path)
+    if withheld(data["meta"], data["complete"]):
+        raise HTTPException(403, f"{run_id} is an unfinished test-split run (no run_end): its partial outcomes are withheld; see docs/threats_to_validity.md")
     sc = rep.score(data)
     arms = []
     for arm in rep.ARMS:

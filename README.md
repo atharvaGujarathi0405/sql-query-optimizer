@@ -48,7 +48,7 @@ Tune on dev only. Run the test split once, from a clean git tree, with `--allow-
 
 ## UI (Phase 6, partial)
 
-Query Studio (optimize a dev query or an ad-hoc one) and a Results page that reads `results/*.jsonl`. The Workload Advisor and Scale Simulator tabs come with Phases 4 and 5.
+Overview (project status, headline run, what the OR engine found, AHP weights), Query Studio (optimize a dev query or an ad-hoc one; before/after runtime and SQL) and a Results page that reads `results/*.jsonl`. Unfinished test-split runs are withheld by the API (403). The Workload Advisor and Scale Simulator tabs come with Phases 4 and 5.
 
 ```sh
 cd backend && uvicorn app.main:app --port 8000     # API

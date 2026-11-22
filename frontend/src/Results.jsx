@@ -3,7 +3,7 @@ import { api } from "./api.js";
 
 const COLS = ["3", "3-measured", "3-raw", "2b", "2a"];
 
-function Bar({ a }) {
+export function Bar({ a }) {
   const pct = (n) => `${(100 * n) / a.units}%`;
   return (
     <div className="flex h-3 w-40 overflow-hidden rounded bg-slate-100" title={`${a.win} win / ${a.tie} tie / ${a.loss} loss`}>
@@ -28,10 +28,11 @@ export default function Results() {
   const [id, setId] = useState("");
   const [run, setRun] = useState(null);
   const [err, setErr] = useState("");
+  const [hidden, setHidden] = useState(0);
 
   useEffect(() => {
     api("/results")
-      .then((r) => { setRuns(r); setId((r.filter((x) => x.complete && !x.note).at(-1) ?? r.at(-1))?.run_id ?? ""); })
+      .then((all) => { const r = all.filter((x) => !x.withheld); setRuns(r); setId((r.filter((x) => x.complete && !x.note).at(-1) ?? r.at(-1))?.run_id ?? ""); setHidden(all.length - r.length); })
       .catch((e) => setErr(e.message));
   }, []);
   useEffect(() => { if (id) api(`/results/${id}`).then(setRun).catch((e) => setErr(e.message)); }, [id]);
@@ -45,6 +46,7 @@ export default function Results() {
             {runs.map((r) => <option key={r.run_id} value={r.run_id}>{r.run_id} ({r.split}, {r.provider}{r.complete ? "" : ", INCOMPLETE"}{r.note ? ", NOT A RESULT" : ""})</option>)}
           </select>
         </label>
+        {hidden > 0 && <span className="text-xs text-slate-500">{hidden} unfinished test-split run(s) withheld: partial test outcomes are not shown.</span>}
         {err && <span className="text-red-600">{err}</span>}
       </div>
 

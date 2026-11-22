@@ -6,5 +6,5 @@ import tailwindcss from "@tailwindcss/vite";
 const api = { target: "http://127.0.0.1:8000" };
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  server: { proxy: { "/studio": api, "/queries": api, "/results": api, "/health": api } },
+  server: { proxy: { "/studio": api, "/overview": api, "/queries": api, "/results": api, "/health": api } },
 });

@@ -5,7 +5,7 @@ const DATASETS = ["employees", "sakila", "tpch"];
 const f = (v, d = 1) => (v == null ? "–" : Number(v).toLocaleString(undefined, { maximumFractionDigits: d }));
 
 function Sql({ children }) {
-  return <pre className="overflow-x-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{children}</pre>;
+  return <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded bg-slate-900 p-3 text-xs text-slate-100">{children}</pre>;
 }
 
 export default function Studio() {
@@ -38,6 +38,9 @@ export default function Studio() {
 
   const alts = res?.alternatives ?? [];
   const winner = alts.find((a) => a.id === res?.winner);
+  const orig = alts.find((a) => a.id === "original");
+  const t0 = orig?.metrics.runtime_ms_median, t1 = winner?.metrics.runtime_ms_median;
+  const tmax = Math.max(...alts.map((a) => a.metrics?.runtime_ms_median ?? 0), 1e-9);
   return (
     <div className="space-y-4">
       <section className="space-y-2 rounded border border-slate-200 bg-white p-4">
@@ -82,7 +85,21 @@ export default function Studio() {
               AHP weights {res.criteria.map((c, i) => `${c} ${res.weights[i]}`).join(" · ")} · CR {res.ahp.consistency_ratio} ·
               pool by {res.pool.generator.provider}/{res.pool.generator.model} ({res.pool.cached ? "cached" : "new"})
             </p>
-            {winner && <Sql>{winner.sql}</Sql>}
+            {winner && res.winner === "original" && <p className="text-sm text-slate-600">No rewrite beat the original, which is a valid outcome and scores as the baseline.</p>}
+            {winner && res.winner !== "original" && (
+              <>
+                <p className="mb-2 text-sm">
+                  <b>{f(t0, 2)} ms → {f(t1, 2)} ms</b>{" "}
+                  <span className={t1 < t0 ? "text-emerald-700" : "text-red-600"}>(×{f(t1 / t0, 2)}, {f(t0 / t1, 1)}× {t1 <= t0 ? "faster" : "slower"})</span>
+                  {" "}· rows examined {f(orig.metrics.rows_examined, 0)} → {f(winner.metrics.rows_examined, 0)}
+                </p>
+                <p className="mb-2 text-sm text-slate-600">{winner.rationale}</p>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div><p className="text-xs text-slate-500">original</p><Sql>{orig.sql}</Sql></div>
+                  <div><p className="text-xs text-slate-500">OR pick: {winner.id}</p><Sql>{winner.sql}</Sql></div>
+                </div>
+              </>
+            )}
           </section>
 
           <section className="overflow-x-auto rounded border border-slate-200 bg-white p-4">
@@ -94,7 +111,8 @@ export default function Studio() {
               <tbody>{alts.map((a) => (
                 <tr key={a.id} className={`border-b ${a.id === res.winner ? "bg-emerald-50" : ""}`}>
                   <td className="py-1 font-mono">{a.id}</td>
-                  <td>{f(a.metrics.runtime_ms_median, 2)}</td><td>{f(a.metrics.runtime_ms_iqr, 2)}</td>
+                  <td><div className="flex items-center gap-2">{f(a.metrics.runtime_ms_median, 2)}
+                    <div className="h-2 rounded bg-slate-400" style={{ width: `${(60 * (a.metrics.runtime_ms_median ?? 0)) / tmax}px` }} /></div></td><td>{f(a.metrics.runtime_ms_iqr, 2)}</td>
                   <td>{f(a.metrics.rows_examined, 0)}</td><td>{f(a.metrics.est_cost, 0)}</td><td>{f(a.metrics.est_rows, 0)}</td>
                   <td>{a.ranked ? f(a.topsis_closeness, 3) : <span className="text-red-600">{a.excluded_reason}</span>}</td>
                   <td>{a.ranked ? res.ranking.indexOf(a.id) + 1 : "–"}</td>
