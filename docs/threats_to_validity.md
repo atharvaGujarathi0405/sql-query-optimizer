@@ -262,3 +262,12 @@ the final list.
     protocol run twice each; the second (warm) pass added 0 `Innodb_buffer_pool_reads` for every query
     (`results/residency-2026-11-22.txt`). This covers each query run alone; the interleaved passes in the runner
     were not separately checked. Timings still describe a fully cached database, not I/O-bound production.
+
+45. **`test-001` was aborted by the environment and is not a result (2026-11-22).** The test run started from the
+    frozen commit `a4e1948` (tag `freeze-v1`) and was killed when the Claude Code session ended: Docker/MySQL and
+    the Ollama server went down with it. The file holds 8 finished queries (ap01, ap02, ap04, ap06, ap07, ap08,
+    ap09, ap10), a partial ap11 and no `run_end`. The cause is infrastructure (low RAM; C: had 0.1 GiB free until
+    the pip/npm caches were cleared), not any arm's behaviour. The file is kept as an aborted record, unreported
+    and unexcluded; no outcome in it was read before the decision to rerun the whole split from scratch under a
+    new id (same precedent as dev-002, dev-004, dev-005). Partial results are not merged into the rerun. The
+    rerun uses the same frozen commit's code, config, pools and split, so the freeze is unchanged.
